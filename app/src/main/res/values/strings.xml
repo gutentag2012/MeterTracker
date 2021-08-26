@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">MeterTracker</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="_import">Import</string>
+    <string name="_export">Export</string>
+    <string name="dashboard">Dashboard</string>
 </resources>
