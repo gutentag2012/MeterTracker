@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/drawable/ic_launcher_foreground.xml" value="0.146875" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/activity_main.xml" value="0.2" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_aggregate_data.xml" value="0.268" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_data_entry.xml" value="0.4962962962962963" />
