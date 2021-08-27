@@ -8,27 +8,35 @@
     <fragment
         android:id="@+id/dashboardFragment"
         android:name="com.joshuagawenda.metertracker.DashboardFragment"
-        android:label="fragment_dashboard"
-        tools:layout="@layout/fragment_dashboard" >
-        <action
-            android:id="@+id/action_dashboardFragment_to_addMeasurementFragment"
-            app:destination="@id/addMeasurementFragment" />
+        android:label="@string/dashboard"
+        tools:layout="@layout/fragment_dashboard">
         <action
             android:id="@+id/action_dashboardFragment_to_historyFragment"
             app:destination="@id/historyFragment" />
+        <action
+            android:id="@+id/action_global_to_addMeasurementFragment"
+            app:destination="@id/addMeasurementFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
     <fragment
         android:id="@+id/addMeasurementFragment"
-        android:name="com.joshuagawenda.metertracker.addMeasurementFragment"
-        android:label="fragment_add_measurement"
+        android:name="com.joshuagawenda.metertracker.AddMeasurementFragment"
+        android:label="@string/addMeasurement"
         tools:layout="@layout/fragment_add_measurement" />
     <fragment
         android:id="@+id/historyFragment"
         android:name="com.joshuagawenda.metertracker.HistoryFragment"
-        android:label="fragment_history"
-        tools:layout="@layout/fragment_history" >
+        android:label="@string/history"
+        tools:layout="@layout/fragment_history">
         <action
-            android:id="@+id/action_historyFragment_to_addMeasurementFragment"
-            app:destination="@id/addMeasurementFragment" />
+            android:id="@+id/action_global_to_addMeasurementFragment"
+            app:destination="@id/addMeasurementFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
 </navigation>

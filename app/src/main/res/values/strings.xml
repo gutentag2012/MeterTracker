@@ -5,4 +5,10 @@
     <string name="_import">Import</string>
     <string name="_export">Export</string>
     <string name="dashboard">Dashboard</string>
+    <string name="addMeasurement">Add Measurement</string>
+    <string name="history">History</string>
+    <string name="type">Type</string>
+    <string name="measurement_unit">Measurement Unit</string>
+    <string name="date">Date</string>
+    <string name="value">Value</string>
 </resources>

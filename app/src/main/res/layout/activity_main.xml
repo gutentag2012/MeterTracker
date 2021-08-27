@@ -11,10 +11,23 @@
         android:layout_height="wrap_content">
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
+            app:titleTextColor="@color/on_primary"
+            app:navigationIconTint="@color/on_primary"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:menu="@menu/toolbar"
-            style="@style/Widget.MaterialComponents.ActionBar.Primary"/>
+            style="@style/Widget.MaterialComponents.ActionBar.Primary">
+            <Button
+                android:id="@+id/save_button"
+                android:visibility="gone"
+                android:layout_gravity="end"
+                app:rippleColor="@color/on_primary"
+                android:textColor="@color/on_primary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.Button.TextButton.Dialog"
+                android:text="Save"/>
+        </com.google.android.material.appbar.MaterialToolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.fragment.app.FragmentContainerView
@@ -33,6 +46,10 @@
         android:layout_gravity="bottom|end"
         android:importantForAccessibility="no"
         android:layout_margin="16dp"
+        android:backgroundTint="@color/primary"
+        android:foregroundTint="@color/primary"
+        app:backgroundTint="@color/primary"
+        app:tint="@color/on_primary"
         app:srcCompat="@drawable/round_add_white_24dp"/>
     
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

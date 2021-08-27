@@ -26,6 +26,7 @@ public final class DataReaderContract {
             "DROP TABLE IF EXISTS " + DataEntry.TABLE_NAME;
 
     public static final ArrayList<Function<Cursor, Object>> conversions = new ArrayList<Function<Cursor, Object>>() {{
+        add(cursor -> cursor.getInt(cursor.getColumnIndexOrThrow(DataEntry._ID)));
         add(cursor -> cursor.getString(cursor.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_TYPE)));
         add(cursor -> cursor.getString(cursor.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_UNIT)));
         add(cursor -> cursor.getFloat(cursor.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_VALUE)));
@@ -37,7 +38,8 @@ public final class DataReaderContract {
             curCSV.getString(1),
             curCSV.getString(2),
             curCSV.getString(3),
-            curCSV.getString(4)
+            curCSV.getString(4),
+            curCSV.getString(5)
     };
 
     private DataReaderContract() {
@@ -49,12 +51,14 @@ public final class DataReaderContract {
         public static final String COLUMN_NAME_UNIT = "unit";
         public static final String COLUMN_NAME_VALUE = "value";
         public static final String COLUMN_NAME_DATE = "date";
+        public final int id;
         public String type;
         public String unit;
         public float value;
         public Date date;
 
-        public DataEntry(String type, String unit, float value, Date date) {
+        public DataEntry(int _ID, String type, String unit, float value, Date date) {
+            this.id = _ID;
             this.type = type;
             this.unit = unit;
             this.value = value;
@@ -62,17 +66,15 @@ public final class DataReaderContract {
         }
 
         public DataEntry(List<Object> row) {
-            this.type = ((String) row.get(0));
-            this.unit = ((String) row.get(1));
-            this.value = ((float) row.get(2));
-            this.date = ((Date) row.get(3));
+            this(((int) row.get(0)), ((String) row.get(1)), ((String) row.get(2)), ((float) row.get(3)),((Date) row.get(4)));
         }
 
         @NonNull
         @Override
         public String toString() {
             return "DataEntry{" +
-                    "type='" + type + '\'' +
+                    "id=" + id +
+                    ", type='" + type + '\'' +
                     ", unit='" + unit + '\'' +
                     ", value=" + value +
                     ", date=" + date +

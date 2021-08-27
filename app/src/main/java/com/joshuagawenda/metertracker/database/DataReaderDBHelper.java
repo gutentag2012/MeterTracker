@@ -2,17 +2,16 @@ package com.joshuagawenda.metertracker.database;
 
 import static com.joshuagawenda.metertracker.database.DataReaderContract.SQL_CREATE_ENTRIES;
 import static com.joshuagawenda.metertracker.database.DataReaderContract.SQL_DELETE_ENTRIES;
-import static com.joshuagawenda.metertracker.database.DataReaderContract.conversions;
 import static com.joshuagawenda.metertracker.database.DataReaderContract.selectConversion;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.os.Environment;
+import android.provider.BaseColumns;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -21,15 +20,15 @@ import androidx.arch.core.util.Function;
 import com.joshuagawenda.metertracker.utils.CSVWriter;
 import com.joshuagawenda.metertracker.utils.DateUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
-import java.net.URI;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalDouble;
 import java.util.stream.Collectors;
 
 public class DataReaderDBHelper extends SQLiteOpenHelper {
@@ -90,7 +89,36 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                 null,          // The values for the WHERE clause
                 null,                   // don't group the rows
                 null,                   // don't filter by row groups
-                DataReaderContract.DataEntry.COLUMN_NAME_DATE + " DESC"               // The sort order
+                DataReaderContract.DataEntry.COLUMN_NAME_DATE + " DESC"             // The sort order
+        )) {
+            List<DataReaderContract.DataEntry> rows = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                List<Object> objects = new ArrayList<>();
+                for (Function<Cursor, Object> conversion : DataReaderContract.conversions) {
+                    objects.add(conversion.apply(cursor));
+                }
+                rows.add(new DataReaderContract.DataEntry(objects));
+            }
+            return rows;
+        } catch (Exception ignored) {
+            return new ArrayList<>();
+        }
+    }
+
+    public List<DataReaderContract.DataEntry> selectAll(String type, String unit) {
+        SQLiteDatabase db = getReadableDatabase();
+        // Filter results WHERE "title" = 'My Title'
+        // String selection = DataReaderContract.DataEntry.COLUMN_NAME_TITLE + " = ?";
+        // String[] selectionArgs = { "My Title" };
+
+        try (Cursor cursor = db.query(
+                DataReaderContract.DataEntry.TABLE_NAME,   // The table to query
+                null,             // The array of columns to return (pass null to get all)
+                DataReaderContract.DataEntry.COLUMN_NAME_TYPE + "= ? and " + DataReaderContract.DataEntry.COLUMN_NAME_UNIT + " = ?",              // The columns for the WHERE clause
+                new String[]{type, unit},          // The values for the WHERE clause
+                null,                   // don't group the rows
+                null,                   // don't filter by row groups
+                DataReaderContract.DataEntry.COLUMN_NAME_DATE + " DESC"              // The sort order
         )) {
             List<DataReaderContract.DataEntry> rows = new ArrayList<>();
             while (cursor.moveToNext()) {
@@ -130,6 +158,27 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
         return file;
     }
 
+    public void importDatabase(Context context, Uri uri) {
+        ContentResolver resolver = context.getContentResolver();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resolver.openInputStream(uri)))) {
+            DataReaderContract.DataEntry[] dataEntries = reader.lines().skip(1).map(line -> {
+                String[] split = Arrays.stream(line.split(","))
+                        .map(e -> e.replaceAll("\"", ""))
+                        .toArray(String[]::new);
+                return new DataReaderContract.DataEntry(
+                        0,
+                        split[1],
+                        split[2],
+                        Float.parseFloat(split[3]),
+                        DateUtils.stringToDate(split[4]));
+            }).toArray(DataReaderContract.DataEntry[]::new);
+            clear();
+            insertAll(dataEntries);
+        } catch (IOException e) {
+            Log.e(TAG, "onActivityResult: " + e);
+        }
+    }
+
     public List<DataAggregation> aggregate() {
         List<DataAggregation> aggregations = new ArrayList<>();
         Map<String, List<DataReaderContract.DataEntry>> collect = selectAll().stream().collect(Collectors.groupingBy(e -> e.type + ";" + e.unit));
@@ -152,7 +201,8 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
             aggregations.add(new DataAggregation(
                     type,
                     unit,
-                    data.size() > 1 ? data.get(1).value : 0,
+                    data.size() > 0 ? DateUtils.dateToString(data.get(0).date) : "-",
+                    data.size() > 0 ? data.get(0).value : 0,
                     average,
                     data.size() >= 8 ? (float) difference : 0));
         });
@@ -162,5 +212,46 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
     public void clear() {
         getWritableDatabase().execSQL(SQL_DELETE_ENTRIES);
         getWritableDatabase().execSQL(SQL_CREATE_ENTRIES);
+    }
+
+    public List<String[]> getAllTypes() {
+        SQLiteDatabase db = getReadableDatabase();
+
+        try (Cursor cursor = db.query(
+                true,
+                DataReaderContract.DataEntry.TABLE_NAME,
+                new String[]{DataReaderContract.DataEntry.COLUMN_NAME_TYPE, DataReaderContract.DataEntry.COLUMN_NAME_UNIT},
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        )) {
+            List<String[]> entries = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                List<Object> objects = new ArrayList<>();
+                String type = cursor.getString(cursor.getColumnIndexOrThrow(DataReaderContract.DataEntry.COLUMN_NAME_TYPE));
+                String unit = cursor.getString(cursor.getColumnIndexOrThrow(DataReaderContract.DataEntry.COLUMN_NAME_UNIT));
+                entries.add(new String[]{type, unit});
+            }
+            return entries;
+        } catch (Exception ignored) {
+            return new ArrayList<>();
+        }
+    }
+
+    public void delete(DataReaderContract.DataEntry entry) {
+        getWritableDatabase()
+                .delete(DataReaderContract.DataEntry.TABLE_NAME, BaseColumns._ID + "= ?", new String[]{String.valueOf(entry.id)});
+    }
+
+    public void update(DataReaderContract.DataEntry dataEntry) {
+        ContentValues cv = new ContentValues();
+        cv.put(DataReaderContract.DataEntry.COLUMN_NAME_TYPE, dataEntry.type); //These Fields should be your String values of actual column names
+        cv.put(DataReaderContract.DataEntry.COLUMN_NAME_UNIT, dataEntry.unit);
+        cv.put(DataReaderContract.DataEntry.COLUMN_NAME_VALUE, dataEntry.value);
+        cv.put(DataReaderContract.DataEntry.COLUMN_NAME_DATE, DateUtils.dateToString(dataEntry.date));
+        getWritableDatabase().update(DataReaderContract.DataEntry.TABLE_NAME, cv, "_id = ?", new String[]{String.valueOf(dataEntry.id)});
     }
 }

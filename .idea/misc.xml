@@ -3,10 +3,13 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/activity_main.xml" value="0.3" />
-        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_aggregate_data.xml" value="0.32395833333333335" />
-        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_data_entry.xml" value="0.32395833333333335" />
+        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/activity_main.xml" value="0.2" />
+        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_aggregate_data.xml" value="0.268" />
+        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_data_entry.xml" value="0.4962962962962963" />
+        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_dropdown.xml" value="0.44000000000000006" />
+        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/fragment_add_measurement.xml" value="0.268" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/fragment_dashboard.xml" value="0.32395833333333335" />
+        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/fragment_history.xml" value="0.268" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/menu/toolbar.xml" value="0.32395833333333335" />
       </map>
     </option>
