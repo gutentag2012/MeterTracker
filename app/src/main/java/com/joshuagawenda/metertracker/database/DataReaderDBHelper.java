@@ -17,6 +17,9 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.arch.core.util.Function;
 
+import com.google.android.material.snackbar.Snackbar;
+import com.joshuagawenda.metertracker.MainActivity;
+import com.joshuagawenda.metertracker.R;
 import com.joshuagawenda.metertracker.utils.CSVWriter;
 import com.joshuagawenda.metertracker.utils.DateUtils;
 
@@ -29,7 +32,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.OptionalDouble;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 public class DataReaderDBHelper extends SQLiteOpenHelper {
     public static final int DATABASE_VERSION = 2;
@@ -63,6 +70,8 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
         db.beginTransaction();
         try {
             for (DataReaderContract.DataEntry entry : entries) {
+                if (entry == null)
+                    continue;
                 ContentValues values = new ContentValues();
                 values.put(DataReaderContract.DataEntry.COLUMN_NAME_TYPE, entry.type);
                 values.put(DataReaderContract.DataEntry.COLUMN_NAME_UNIT, entry.unit);
@@ -89,7 +98,7 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                 null,          // The values for the WHERE clause
                 null,                   // don't group the rows
                 null,                   // don't filter by row groups
-                DataReaderContract.DataEntry.COLUMN_NAME_DATE + " DESC"             // The sort order
+                "substr("+DataReaderContract.DataEntry.COLUMN_NAME_DATE+", 7, 4) DESC, substr("+DataReaderContract.DataEntry.COLUMN_NAME_DATE+", 4, 2) DESC, substr("+DataReaderContract.DataEntry.COLUMN_NAME_DATE+", 1, 2) DESC"           // The sort order
         )) {
             List<DataReaderContract.DataEntry> rows = new ArrayList<>();
             while (cursor.moveToNext()) {
@@ -118,7 +127,7 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                 new String[]{type, unit},          // The values for the WHERE clause
                 null,                   // don't group the rows
                 null,                   // don't filter by row groups
-                DataReaderContract.DataEntry.COLUMN_NAME_DATE + " DESC"              // The sort order
+                "substr("+DataReaderContract.DataEntry.COLUMN_NAME_DATE+", 7, 4) DESC, substr("+DataReaderContract.DataEntry.COLUMN_NAME_DATE+", 4, 2) DESC, substr("+DataReaderContract.DataEntry.COLUMN_NAME_DATE+", 1, 2) DESC"
         )) {
             List<DataReaderContract.DataEntry> rows = new ArrayList<>();
             while (cursor.moveToNext()) {
@@ -165,15 +174,28 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                 String[] split = Arrays.stream(line.split(","))
                         .map(e -> e.replaceAll("\"", ""))
                         .toArray(String[]::new);
-                return new DataReaderContract.DataEntry(
-                        0,
-                        split[1],
-                        split[2],
-                        Float.parseFloat(split[3]),
-                        DateUtils.stringToDate(split[4]));
+                try {
+                    int reduce = split.length == 5 ? 0 : 1;
+                    return new DataReaderContract.DataEntry(
+                            0,
+                            split[1 - reduce],
+                            split[2 - reduce],
+                            Float.parseFloat(split[3 - reduce]),
+                            DateUtils.stringToDate(split[4 - reduce]));
+                } catch (RuntimeException e) {
+                    Log.e(TAG, "importDatabase: " + e);
+                    return null;
+                }
             }).toArray(DataReaderContract.DataEntry[]::new);
             clear();
             insertAll(dataEntries);
+            if (Arrays.stream(dataEntries).anyMatch(Objects::isNull)) {
+                Snackbar.make(
+                        ((MainActivity) context).findViewById(R.id.root),
+                        "An error occurred while importing the data!",
+                        Snackbar.LENGTH_LONG)
+                        .show();
+            }
         } catch (IOException e) {
             Log.e(TAG, "onActivityResult: " + e);
         }
@@ -183,17 +205,17 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
         List<DataAggregation> aggregations = new ArrayList<>();
         Map<String, List<DataReaderContract.DataEntry>> collect = selectAll().stream().collect(Collectors.groupingBy(e -> e.type + ";" + e.unit));
         collect.forEach((key, data) -> {
-            double sum = data.stream()
-                    .limit(4)
-                    .mapToDouble(e -> e.value)
-                    .sum();
-            double sumLastMonth = data.stream()
-                    .skip(4)
-                    .limit(4)
-                    .mapToDouble(e -> e.value)
-                    .sum();
-            double difference = (sum - sumLastMonth) / sumLastMonth * 100;
-            float average = ((float) sum) / Math.min(data.size(), 4);
+            double[] differences = IntStream.range(0, data.size())
+                    .mapToDouble(i -> {
+                        DataReaderContract.DataEntry current = data.get(i);
+                        DataReaderContract.DataEntry last = i + 1 < data.size() ? data.get(i + 1) : null;
+                        if (last == null) return 0;
+                        return current.value - last.value;
+                    }).toArray();
+            double averageCurrent = Arrays.stream(differences).limit(4).average().orElse(0);
+            double averageLast = Arrays.stream(differences).skip(4).limit(4).average().orElse(0);
+            double difference = (averageCurrent - averageLast) / averageLast + 0.0;
+            float average = (float) Arrays.stream(differences).limit(4).average().orElse(0);
 
             String[] split = key.split(";");
             String type = split[0];
@@ -230,7 +252,6 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
         )) {
             List<String[]> entries = new ArrayList<>();
             while (cursor.moveToNext()) {
-                List<Object> objects = new ArrayList<>();
                 String type = cursor.getString(cursor.getColumnIndexOrThrow(DataReaderContract.DataEntry.COLUMN_NAME_TYPE));
                 String unit = cursor.getString(cursor.getColumnIndexOrThrow(DataReaderContract.DataEntry.COLUMN_NAME_UNIT));
                 entries.add(new String[]{type, unit});

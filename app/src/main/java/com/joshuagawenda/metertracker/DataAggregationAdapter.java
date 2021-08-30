@@ -68,7 +68,7 @@ public class DataAggregationAdapter extends RecyclerView.Adapter<DataAggregation
         public void bind(DataAggregation dataAggregation) {
             this.title.setText(dataAggregation.type);
             this.last_week.setText(String.format(Locale.getDefault(), "%.2f", dataAggregation.lastWeek));
-            this.average_month.setText(String.format(Locale.getDefault(), "%.2f", dataAggregation.averageMonth));
+            this.average_month.setText(String.format(Locale.getDefault(), "%s%.2f", dataAggregation.average > 0.001 ? "+" : "", dataAggregation.average));
             boolean positive = dataAggregation.monthlyDifference >= 0;
             this.difference.setText(String.format(Locale.getDefault(), "%s%.2f%%", positive ? "+" : "", dataAggregation.monthlyDifference));
             this.difference.setTextColor(ContextCompat.getColor(super.itemView.getContext(), positive?R.color.red:R.color.green));
@@ -78,7 +78,7 @@ public class DataAggregationAdapter extends RecyclerView.Adapter<DataAggregation
                 bundle.putString("type", dataAggregation.type);
                 bundle.putString("unit", dataAggregation.unit);
                 bundle.putString("lastDate", dataAggregation.lastDate);
-                bundle.putFloat("averageMonth", dataAggregation.averageMonth);
+                bundle.putFloat("averageMonth", dataAggregation.average);
                 bundle.putFloat("lastWeek", dataAggregation.lastWeek);
                 bundle.putFloat("monthlyDifference", dataAggregation.monthlyDifference);
                 mainActivity.getNavController().navigate(R.id.action_dashboardFragment_to_historyFragment, bundle);

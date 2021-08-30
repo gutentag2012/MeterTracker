@@ -42,7 +42,7 @@ import java.util.Locale;
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.bind(entries.get(position));
+        holder.bind(entries.get(position), entries.size() <= position + 1 ? null: entries.get(position + 1));
     }
 
     @Override
@@ -59,16 +59,24 @@ import java.util.Locale;
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         private final TextView value;
+        private final TextView value_difference;
         private final TextView date;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             this.value = itemView.findViewById(R.id.value);
+            this.value_difference = itemView.findViewById(R.id.value_difference);
             this.date = itemView.findViewById(R.id.date);
         }
 
-        public void bind(DataReaderContract.DataEntry entry) {
+        public void bind(DataReaderContract.DataEntry entry, DataReaderContract.DataEntry entryBefore) {
             this.value.setText(String.format(Locale.getDefault(), "%.2f %s", entry.value, entry.unit));
+            if(entryBefore==null) {
+            this.value_difference.setText("");
+            } else {
+                float difference = entry.value - entryBefore.value;
+                this.value_difference.setText(String.format(Locale.getDefault(), "%s%.2f %s", difference > 0.001 ? "+" : "", difference, entry.unit));
+            }
             this.date.setText(DateUtils.dateToString(entry.date));
             super.itemView.setOnClickListener(v -> {
                 if(onUpdate!=null)

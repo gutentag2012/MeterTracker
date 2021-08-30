@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -59,7 +58,7 @@ public class HistoryFragment extends Fragment {
 
         title.setText(this.aggregation.type);
         last_week.setText(String.format(Locale.getDefault(), "%.2f", this.aggregation.lastWeek));
-        average_month.setText(String.format(Locale.getDefault(), "%.2f", this.aggregation.averageMonth));
+        average_month.setText(String.format(Locale.getDefault(), "%.2f", this.aggregation.average));
         boolean positive = this.aggregation.monthlyDifference >= 0;
         difference.setText(String.format(Locale.getDefault(), "%s%.2f%%", positive ? "+" : "", this.aggregation.monthlyDifference));
         difference.setTextColor(ContextCompat.getColor(requireContext(), positive ? R.color.red : R.color.green));
