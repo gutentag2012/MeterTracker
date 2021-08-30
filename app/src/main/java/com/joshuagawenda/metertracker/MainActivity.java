@@ -3,7 +3,9 @@ package com.joshuagawenda.metertracker;
 import static com.joshuagawenda.metertracker.database.DatabaseAccessor.CSV_DATA_CREATE_REQUEST;
 import static com.joshuagawenda.metertracker.database.DatabaseAccessor.CSV_DATA_OPEN_REQUEST;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,6 +26,9 @@ import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.joshuagawenda.metertracker.database.DataReaderDBHelper;
 import com.joshuagawenda.metertracker.database.DatabaseAccessor;
+import com.joshuagawenda.metertracker.utils.DateUtils;
+
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity implements NavController.OnDestinationChangedListener {
     private static final String TAG = "MainActivity";
@@ -69,7 +74,26 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
                     }
                 }
         );
-
+        SharedPreferences main = getSharedPreferences("Main", Context.MODE_PRIVATE);
+        main.edit().putString("lastReminder", null).apply();
+        String lastReminder = main.getString("lastReminder", null);
+        Calendar cal = Calendar.getInstance();
+        Log.e(TAG, "LastReminder: " + lastReminder);
+        if (lastReminder == null || DateUtils.stringToDate(lastReminder).compareTo(cal.getTime()) <= 0) {
+            final String title = "Reminder";
+            final String text = "Note down the weekly values!";
+            NotificationReceiver.cancelNotification(this, title, text);
+            if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+                cal.add(Calendar.DATE, 7);
+            }
+            cal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+            cal.set(Calendar.HOUR_OF_DAY, 12);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            Log.e(TAG, "Create Reminder at " + cal.getTime());
+            main.edit().putString("lastReminder", DateUtils.dateToString(cal.getTime())).apply();
+            NotificationReceiver.scheduleNotification(this, cal.getTimeInMillis(), title, text);
+        }
     }
 
     @Override
@@ -84,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
 
     public NavController getNavController() {
         NavHostFragment fragmentById = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
-        return fragmentById==null?null:fragmentById.getNavController();
+        return fragmentById == null ? null : fragmentById.getNavController();
     }
 
     @Override
@@ -99,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater menuInflater = getMenuInflater();
         NavController navController = getNavController();
-        if(navController!=null && navController.getCurrentDestination().getId() != R.id.addMeasurementFragment) {
+        if (navController != null && navController.getCurrentDestination().getId() != R.id.addMeasurementFragment) {
             menuInflater.inflate(R.menu.toolbar, menu);
         }
         return true;
