@@ -215,7 +215,6 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
             double averageCurrent = Arrays.stream(differences).limit(4).average().orElse(0);
             double averageLast = Arrays.stream(differences).skip(4).limit(4).average().orElse(0);
             double difference = (averageCurrent - averageLast) / averageLast + 0.0;
-            float average = (float) Arrays.stream(differences).limit(4).average().orElse(0);
 
             String[] split = key.split(";");
             String type = split[0];
@@ -224,8 +223,8 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                     type,
                     unit,
                     data.size() > 0 ? DateUtils.dateToString(data.get(0).date) : "-",
-                    data.size() > 0 ? data.get(0).value : 0,
-                    average,
+                    data.size() > 1 ? data.get(0).value - data.get(1).value : 0,
+                    ((float) averageCurrent),
                     data.size() >= 8 ? (float) difference : 0));
         });
         return aggregations;
