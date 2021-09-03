@@ -34,8 +34,9 @@ public class AddMeasurementFragment extends Fragment {
             String type = getArguments().getString("type");
             String unit = getArguments().getString("unit");
             float value = getArguments().getFloat("value");
+            int order = getArguments().getInt("order");
             Date date = DateUtils.stringToDate(getArguments().getString("date"));
-            entry = new DataReaderContract.DataEntry(id, type, unit, value, date);
+            entry = new DataReaderContract.DataEntry(id, type, unit, value, order, date);
         }
     }
 
@@ -109,12 +110,13 @@ public class AddMeasurementFragment extends Fragment {
                     typeField.getText().toString(),
                     measurementTextView.getText().toString(),
                     value,
+                    this.entry == null ? -1 : this.entry.order,
                     date
             );
             if (this.entry == null)
                 dbHelper.insertAll(dataEntry);
             else
-                dbHelper.update(dataEntry);
+                dbHelper.update(dataEntry, null);
             ((MainActivity) getActivity()).getNavController().navigateUp();
         });
         return view;

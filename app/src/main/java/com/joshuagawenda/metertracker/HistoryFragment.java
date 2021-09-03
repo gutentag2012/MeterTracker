@@ -40,11 +40,12 @@ public class HistoryFragment extends Fragment {
         if (getArguments() != null) {
             String type = getArguments().getString("type");
             String unit = getArguments().getString("unit");
+            int order = getArguments().getInt("order");
             String lastDate = getArguments().getString("lastDate");
             float averageMonth = getArguments().getFloat("averageMonth");
             float lastWeek = getArguments().getFloat("lastWeek");
             float monthlyDifference = getArguments().getFloat("monthlyDifference");
-            this.aggregation = new DataAggregation(type, unit, lastDate, lastWeek, averageMonth, monthlyDifference);
+            this.aggregation = new DataAggregation(type, unit, order, lastDate, lastWeek, averageMonth, monthlyDifference);
         }
     }
 
@@ -93,6 +94,7 @@ public class HistoryFragment extends Fragment {
             bundle.putString("type", entry.type);
             bundle.putString("unit", entry.unit);
             bundle.putFloat("value", entry.value);
+            bundle.putInt("order", entry.order);
             bundle.putString("date", DateUtils.dateToString(entry.date));
             ((MainActivity) getActivity()).getNavController().navigate(R.id.action_global_to_addMeasurementFragment, bundle);
         });

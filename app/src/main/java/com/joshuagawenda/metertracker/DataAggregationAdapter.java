@@ -11,17 +11,20 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.joshuagawenda.metertracker.database.DataAggregation;
+import com.joshuagawenda.metertracker.database.DataReaderDBHelper;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
 public class DataAggregationAdapter extends RecyclerView.Adapter<DataAggregationAdapter.ViewHolder> {
     private final MainActivity mainActivity;
-    private final List<DataAggregation> aggregations;
+    private final List<DataAggregation> aggregations = new ArrayList<>();
 
     public DataAggregationAdapter(MainActivity mainActivity, List<DataAggregation> aggregations) {
         this.mainActivity = mainActivity;
-        this.aggregations = aggregations;
+        setItems(aggregations);
     }
 
     @NonNull
@@ -45,7 +48,22 @@ public class DataAggregationAdapter extends RecyclerView.Adapter<DataAggregation
     public void setItems(List<DataAggregation> aggregate) {
         this.aggregations.clear();
         this.aggregations.addAll(aggregate);
+        DataReaderDBHelper dbHelper = new DataReaderDBHelper(this.mainActivity);
+        for (int i = 0; i < aggregate.size(); i++) {
+            DataAggregation dataAggregation = aggregate.get(i);
+            if (dataAggregation.order != i) {
+                dbHelper.updateOrder(dataAggregation.type, dataAggregation.unit, i);
+            }
+        }
         this.notifyDataSetChanged();
+    }
+
+    public void swap(int fromPosition, int toPosition) {
+        DataReaderDBHelper dbHelper = new DataReaderDBHelper(this.mainActivity);
+        dbHelper.updateOrder(aggregations.get(fromPosition).type, aggregations.get(fromPosition).unit, toPosition);
+        dbHelper.updateOrder(aggregations.get(toPosition).type, aggregations.get(toPosition).unit, fromPosition);
+        Collections.swap(aggregations, fromPosition, toPosition);
+        notifyItemMoved(fromPosition, toPosition);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -67,16 +85,17 @@ public class DataAggregationAdapter extends RecyclerView.Adapter<DataAggregation
 
         public void bind(DataAggregation dataAggregation) {
             this.title.setText(dataAggregation.type);
-            this.last_week.setText(String.format(Locale.getDefault(), "%.2f", dataAggregation.lastWeek));
-            this.average_month.setText(String.format(Locale.getDefault(), "%s%.2f", dataAggregation.average > 0.001 ? "+" : "", dataAggregation.average));
+            this.last_week.setText(String.format(Locale.getDefault(), "%s%.2f", dataAggregation.lastWeek >= 0 ? "+" : "", dataAggregation.lastWeek));
+            this.average_month.setText(String.format(Locale.getDefault(), "%s%.2f", dataAggregation.average >= 0 ? "+" : "", dataAggregation.average));
             boolean positive = dataAggregation.monthlyDifference >= 0;
             this.difference.setText(String.format(Locale.getDefault(), "%s%.2f%%", positive ? "+" : "", dataAggregation.monthlyDifference));
-            this.difference.setTextColor(ContextCompat.getColor(super.itemView.getContext(), positive?R.color.red:R.color.green));
+            this.difference.setTextColor(ContextCompat.getColor(super.itemView.getContext(), positive ? R.color.red : R.color.green));
             this.last_date.setText(dataAggregation.lastDate);
             super.itemView.setOnClickListener(v -> {
                 Bundle bundle = new Bundle();
                 bundle.putString("type", dataAggregation.type);
                 bundle.putString("unit", dataAggregation.unit);
+                bundle.putInt("order", dataAggregation.order);
                 bundle.putString("lastDate", dataAggregation.lastDate);
                 bundle.putFloat("averageMonth", dataAggregation.average);
                 bundle.putFloat("lastWeek", dataAggregation.lastWeek);
