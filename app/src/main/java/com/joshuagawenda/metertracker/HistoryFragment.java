@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.joshuagawenda.metertracker.database.DataAggregation;
 import com.joshuagawenda.metertracker.database.DataReaderContract;
 import com.joshuagawenda.metertracker.database.DataReaderDBHelper;
@@ -54,7 +55,7 @@ public class HistoryFragment extends Fragment {
                 .stream()
                 .filter(e -> e.type.equals(this.aggregation.type) && e.unit.equals(this.aggregation.unit))
                 .findFirst().orElse(null);
-        if(this.aggregation==null)
+        if (this.aggregation == null)
             return;
 
         title.setText(this.aggregation.type);
@@ -87,6 +88,16 @@ public class HistoryFragment extends Fragment {
         adapter.setOnDelete(entry -> {
             dbHelper.delete(entry);
             update(dbHelper);
+            if (this.getView() != null)
+                Snackbar.make(
+                        this.getView(),
+                        "Removed entry from " + DateUtils.dateToString(entry.date),
+                        Snackbar.LENGTH_LONG)
+                        .setAction("Undo", v -> {
+                            dbHelper.insertAll(entry);
+                            update(dbHelper);
+                        })
+                        .show();
         });
         adapter.setOnUpdate(entry -> {
             Bundle bundle = new Bundle();

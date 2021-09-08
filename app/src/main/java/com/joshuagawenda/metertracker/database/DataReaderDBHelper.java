@@ -25,9 +25,12 @@ import com.joshuagawenda.metertracker.utils.DateUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -154,7 +157,7 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
         File file = new File(exportDir, "exportDB.csv");
         try {
             file.createNewFile();
-            CSVWriter csvWrite = new CSVWriter(new FileWriter(file));
+            CSVWriter csvWrite = new CSVWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
             Cursor curCSV = getReadableDatabase().rawQuery(String.format("SELECT * FROM %s", DataReaderContract.DataEntry.TABLE_NAME), null);
             csvWrite.writeNext(curCSV.getColumnNames());
             while (curCSV.moveToNext()) {
@@ -170,7 +173,7 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
 
     public void importDatabase(Context context, Uri uri) {
         ContentResolver resolver = context.getContentResolver();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resolver.openInputStream(uri)))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resolver.openInputStream(uri), StandardCharsets.UTF_8))) {
             DataReaderContract.DataEntry[] dataEntries = reader.lines().skip(1).map(line -> {
                 String[] split = Arrays.stream(line.split(","))
                         .map(e -> e.replaceAll("\"", ""))
