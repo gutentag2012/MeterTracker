@@ -1,6 +1,7 @@
 package com.joshuagawenda.metertracker;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +12,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.joshuagawenda.metertracker.database.DataAggregation;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class TypeDropdownAdapter extends ArrayAdapter<String[]> {
@@ -54,6 +59,7 @@ public class TypeDropdownAdapter extends ArrayAdapter<String[]> {
     public TypeDropdownAdapter(Context context, List<String[]> objects) {
         super(context, 0, objects);
         this.allEntries = objects;
+        this.allEntries.sort(Comparator.<String[], String>comparing(e -> e[2]).thenComparing(e -> e[0]));
     }
 
     @Override

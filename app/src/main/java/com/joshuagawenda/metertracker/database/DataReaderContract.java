@@ -11,6 +11,7 @@ import com.joshuagawenda.metertracker.utils.DateUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class DataReaderContract {
@@ -73,6 +74,19 @@ public final class DataReaderContract {
 
         public DataEntry(List<Object> row) {
             this(((int) row.get(0)), ((String) row.get(1)), ((String) row.get(2)), ((float) row.get(3)),((int) row.get(4)),((Date) row.get(5)));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DataEntry dataEntry = (DataEntry) o;
+            return id == dataEntry.id && Float.compare(dataEntry.value, value) == 0 && order == dataEntry.order && Objects.equals(type, dataEntry.type) && Objects.equals(unit, dataEntry.unit) && Objects.equals(date, dataEntry.date);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, type, unit, value, order, date);
         }
 
         @NonNull

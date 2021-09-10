@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
                 }
         );
         SharedPreferences main = getSharedPreferences("Main", Context.MODE_PRIVATE);
-        main.edit().putString("lastReminder", null).apply();
+//        main.edit().putString("lastReminder", null).apply();
         String lastReminder = main.getString("lastReminder", null);
         Calendar cal = Calendar.getInstance();
         Log.e(TAG, "LastReminder: " + lastReminder);
@@ -94,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
             main.edit().putString("lastReminder", DateUtils.dateToString(cal.getTime())).apply();
             NotificationReceiver.scheduleNotification(this, cal.getTimeInMillis(), title, text);
         }
+        new DataReaderDBHelper(this).updateUnit();
     }
 
     @Override

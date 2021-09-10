@@ -1,5 +1,6 @@
  package com.joshuagawenda.metertracker;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +12,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.joshuagawenda.metertracker.database.DataReaderContract;
 import com.joshuagawenda.metertracker.utils.DateUtils;
+import com.joshuagawenda.metertracker.utils.ListUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -51,9 +54,16 @@ import java.util.Locale;
     }
 
     public void setItems(List<DataReaderContract.DataEntry> entries) {
+         List<Integer> added = ListUtils.getIndexesInserted(this.entries, entries);
+         List<Integer> removed = ListUtils.getIndexesRemoved(this.entries, entries);
         this.entries.clear();
         this.entries.addAll(entries);
-        this.notifyDataSetChanged();
+        for (int i : removed) {
+             this.notifyItemRemoved(i);
+        }
+        for (int i : added) {
+            this.notifyItemInserted(i);
+        }
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

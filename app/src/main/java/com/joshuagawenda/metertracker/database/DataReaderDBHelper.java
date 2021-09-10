@@ -229,8 +229,7 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                         return current.value - last.value;
                     }).toArray();
             double averageCurrent = Arrays.stream(differences).limit(4).average().orElse(0);
-            double averageLast = Arrays.stream(differences).skip(4).limit(4).average().orElse(0);
-            double difference = ((averageCurrent - averageLast) / averageLast + 0.0f) * 100.0f;
+            double difference = (((data.size() > 1 ? data.get(0).value - data.get(1).value : 0) - averageCurrent) / averageCurrent + 0.0f) * 100.0f;
 
             String[] split = key.split(";");
             String type = split[0];
@@ -259,7 +258,7 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
         try (Cursor cursor = db.query(
                 true,
                 DataReaderContract.DataEntry.TABLE_NAME,
-                new String[]{DataReaderContract.DataEntry.COLUMN_NAME_TYPE, DataReaderContract.DataEntry.COLUMN_NAME_UNIT},
+                new String[]{DataReaderContract.DataEntry.COLUMN_NAME_TYPE, DataReaderContract.DataEntry.COLUMN_NAME_UNIT, DataReaderContract.DataEntry.COLUMN_NAME_ORDER},
                 null,
                 null,
                 null,
@@ -271,7 +270,8 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
             while (cursor.moveToNext()) {
                 String type = cursor.getString(cursor.getColumnIndexOrThrow(DataReaderContract.DataEntry.COLUMN_NAME_TYPE));
                 String unit = cursor.getString(cursor.getColumnIndexOrThrow(DataReaderContract.DataEntry.COLUMN_NAME_UNIT));
-                entries.add(new String[]{type, unit});
+                int order = cursor.getInt(cursor.getColumnIndexOrThrow(DataReaderContract.DataEntry.COLUMN_NAME_ORDER));
+                entries.add(new String[]{type, unit, String.valueOf(order)});
             }
             return entries;
         } catch (Exception ignored) {
@@ -303,6 +303,21 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
             List<DataReaderContract.DataEntry> dataEntries = selectAll(type, unit);
             for(DataReaderContract.DataEntry e : dataEntries) {
                 e.order = i;
+                update(e, db);
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public void updateUnit() {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            List<DataReaderContract.DataEntry> dataEntries = selectAll("Wasser", "m^3");
+            for(DataReaderContract.DataEntry e : dataEntries) {
+                e.unit = "m³";
                 update(e, db);
             }
             db.setTransactionSuccessful();
