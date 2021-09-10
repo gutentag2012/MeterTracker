@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
             main.edit().putString("lastReminder", DateUtils.dateToString(cal.getTime())).apply();
             NotificationReceiver.scheduleNotification(this, cal.getTimeInMillis(), title, text);
         }
-        new DataReaderDBHelper(this).updateUnit();
+//        new DataReaderDBHelper(this).updateUnit();
     }
 
     @Override
