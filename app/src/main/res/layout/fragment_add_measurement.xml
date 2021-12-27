@@ -10,9 +10,9 @@
     tools:context=".AddMeasurementFragment">
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/type_layout"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
-        android:id="@+id/type_layout"
         android:layout_height="wrap_content"
         android:hint="@string/type">
 
@@ -23,11 +23,11 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/measurement_unit_layout"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:id="@+id/measurement_unit_layout"
         android:hint="@string/measurement_unit">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -36,29 +36,37 @@
             android:layout_height="wrap_content" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <CheckBox
+        android:id="@+id/higher_check_box"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/higher_numbers_are_preferred"
+        android:textAppearance="@style/Text_S2" />
+
     <com.google.android.material.textfield.TextInputLayout
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:id="@+id/date_parent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:hint="@string/date"
-        app:endIconMode="custom"
-        app:endIconDrawable="@drawable/baseline_calendar_today_black_24dp">
+        app:endIconDrawable="@drawable/baseline_calendar_today_black_24dp"
+        app:endIconMode="custom">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/date"
             android:layout_width="match_parent"
-            android:focusable="false"
             android:layout_height="wrap_content"
+            android:focusable="false"
             android:inputType="date" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/value_layout"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:id="@+id/value_layout"
         android:hint="@string/value">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -66,7 +74,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:imeOptions="actionDone"
-            android:inputType="numberDecimal" />
+            android:inputType="number|numberDecimal" />
     </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>

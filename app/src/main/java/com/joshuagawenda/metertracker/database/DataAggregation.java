@@ -6,6 +6,7 @@ public class DataAggregation {
     public final String type;
     public final String unit;
     public final int order;
+    public final boolean isHigherPositive;
     public final String lastDate;
     public final float lastWeek;
     public final float average;
@@ -19,10 +20,11 @@ public class DataAggregation {
         return order;
     }
 
-    public DataAggregation(String type, String unit, int order, String lastDate, float lastWeek, float average, float monthlyDifference) {
+    public DataAggregation(String type, String unit, int order, boolean isHigherPositive, String lastDate, float lastWeek, float average, float monthlyDifference) {
         this.type = type;
         this.unit = unit;
         this.order = order;
+        this.isHigherPositive = isHigherPositive;
         this.lastDate = lastDate;
         this.lastWeek = lastWeek;
         this.average = average;
@@ -36,6 +38,7 @@ public class DataAggregation {
                 "type='" + type + '\'' +
                 ", unit='" + unit + '\'' +
                 ", order=" + order +
+                ", isHigherPositive=" + isHigherPositive +
                 ", lastDate=" + lastDate +
                 ", lastWeek=" + lastWeek +
                 ", averageMonth=" + average +

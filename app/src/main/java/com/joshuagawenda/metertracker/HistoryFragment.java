@@ -1,11 +1,13 @@
 package com.joshuagawenda.metertracker;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -31,6 +33,7 @@ public class HistoryFragment extends Fragment {
     TextView average_month;
     TextView difference;
     TextView last_date;
+    ConstraintLayout parentAggregation;
     DataEntryAdapter adapter;
 
     private DataAggregation aggregation;
@@ -42,11 +45,12 @@ public class HistoryFragment extends Fragment {
             String type = getArguments().getString("type");
             String unit = getArguments().getString("unit");
             int order = getArguments().getInt("order");
+            boolean isHigherPositive = getArguments().getBoolean("isHigherPositive");
             String lastDate = getArguments().getString("lastDate");
             float averageMonth = getArguments().getFloat("averageMonth");
             float lastWeek = getArguments().getFloat("lastWeek");
             float monthlyDifference = getArguments().getFloat("monthlyDifference");
-            this.aggregation = new DataAggregation(type, unit, order, lastDate, lastWeek, averageMonth, monthlyDifference);
+            this.aggregation = new DataAggregation(type, unit, order, isHigherPositive, lastDate, lastWeek, averageMonth, monthlyDifference);
         }
     }
 
@@ -63,8 +67,17 @@ public class HistoryFragment extends Fragment {
         average_month.setText(String.format(Locale.getDefault(), "%.2f", this.aggregation.average));
         boolean positive = this.aggregation.monthlyDifference >= 0;
         difference.setText(String.format(Locale.getDefault(), "%s%.2f%%", positive ? "+" : "", this.aggregation.monthlyDifference));
-        difference.setTextColor(ContextCompat.getColor(requireContext(), positive ? R.color.red : R.color.green));
+        difference.setTextColor(ContextCompat.getColor(requireContext(), positive ^ this.aggregation.isHigherPositive ? R.color.red : R.color.green));
         last_date.setText(this.aggregation.lastDate);
+        parentAggregation.setOnClickListener(c -> {
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("isEntry", false);
+            bundle.putString("type", this.aggregation.type);
+            bundle.putString("unit", this.aggregation.unit);
+            bundle.putBoolean("isHigherPositive", this.aggregation.isHigherPositive);
+            bundle.putInt("order", this.aggregation.order);
+            ((MainActivity) getActivity()).getNavController().navigate(R.id.action_global_to_addMeasurementFragment, bundle);
+        });
 
         adapter.setItems(dbHelper.selectAll(this.aggregation.type, this.aggregation.unit));
     }
@@ -74,6 +87,7 @@ public class HistoryFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_history, container, false);
+        parentAggregation = view.findViewById(R.id.included);
         title = view.findViewById(R.id.title);
         last_week = view.findViewById(R.id.last_week);
         average_month = view.findViewById(R.id.average_month);
@@ -101,9 +115,11 @@ public class HistoryFragment extends Fragment {
         });
         adapter.setOnUpdate(entry -> {
             Bundle bundle = new Bundle();
+            bundle.putBoolean("isEntry", true);
             bundle.putInt("id", entry.id);
             bundle.putString("type", entry.type);
             bundle.putString("unit", entry.unit);
+            bundle.putBoolean("isHigherPositive", entry.isHigherPositive);
             bundle.putFloat("value", entry.value);
             bundle.putInt("order", entry.order);
             bundle.putString("date", DateUtils.dateToString(entry.date));

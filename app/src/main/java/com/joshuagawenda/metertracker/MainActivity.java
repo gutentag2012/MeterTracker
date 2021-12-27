@@ -24,6 +24,8 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.joshuagawenda.metertracker.database.DataAggregation;
 import com.joshuagawenda.metertracker.database.DataReaderDBHelper;
 import com.joshuagawenda.metertracker.database.DatabaseAccessor;
 import com.joshuagawenda.metertracker.utils.DateUtils;
@@ -32,6 +34,9 @@ import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity implements NavController.OnDestinationChangedListener {
     private static final String TAG = "MainActivity";
+
+    public DataAggregation selectedType = null;
+    private FloatingActionButton fab;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -65,12 +70,13 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
             NavigationUI.setupWithNavController(toolbar, navController, appBarConfiguration);
             navController.addOnDestinationChangedListener(this);
         }
-        findViewById(R.id.floating_action_button).setOnClickListener(v -> {
+        this.fab = findViewById(R.id.floating_action_button);
+        this.fab.setOnClickListener(v -> {
                     try {
-                        if (fragmentById != null)
+                        if (fragmentById != null) {
                             fragmentById.getNavController().navigate(R.id.action_global_to_addMeasurementFragment);
+                        }
                     } catch (IllegalArgumentException ignored) {
-
                     }
                 }
         );
@@ -134,5 +140,15 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
     public void onDestinationChanged(@NonNull NavController controller, @NonNull NavDestination destination, @Nullable Bundle arguments) {
         invalidateOptionsMenu();
         findViewById(R.id.save_button).setVisibility(destination.getId() != R.id.addMeasurementFragment ? View.GONE : View.VISIBLE);
+        if (this.fab != null) {
+            if (destination.getId() == R.id.addMeasurementFragment) {
+                this.fab.hide();
+            } else {
+                this.fab.show();
+            }
+        }
+        if (destination.getId() == R.id.dashboardFragment) {
+            this.selectedType = null;
+        }
     }
 }

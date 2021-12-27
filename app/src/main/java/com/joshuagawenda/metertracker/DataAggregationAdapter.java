@@ -1,6 +1,7 @@
 package com.joshuagawenda.metertracker;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -89,13 +90,18 @@ public class DataAggregationAdapter extends RecyclerView.Adapter<DataAggregation
             this.average_month.setText(String.format(Locale.getDefault(), "%s%.2f", dataAggregation.average >= 0 ? "+" : "", dataAggregation.average));
             boolean positive = dataAggregation.monthlyDifference >= 0;
             this.difference.setText(String.format(Locale.getDefault(), "%s%.2f%%", positive ? "+" : "", dataAggregation.monthlyDifference));
-            this.difference.setTextColor(ContextCompat.getColor(super.itemView.getContext(), positive ? R.color.red : R.color.green));
+            this.difference.setTextColor(ContextCompat.getColor(super.itemView.getContext(), positive ^ dataAggregation.isHigherPositive ? R.color.red : R.color.green));
             this.last_date.setText(dataAggregation.lastDate);
             super.itemView.setOnClickListener(v -> {
+                if(this.itemView.getContext() instanceof MainActivity) {
+                    MainActivity mainActivity = (MainActivity) this.itemView.getContext();
+                    mainActivity.selectedType = dataAggregation;
+                }
                 Bundle bundle = new Bundle();
                 bundle.putString("type", dataAggregation.type);
                 bundle.putString("unit", dataAggregation.unit);
                 bundle.putInt("order", dataAggregation.order);
+                bundle.putBoolean("isHigherPositive", dataAggregation.isHigherPositive);
                 bundle.putString("lastDate", dataAggregation.lastDate);
                 bundle.putFloat("averageMonth", dataAggregation.average);
                 bundle.putFloat("lastWeek", dataAggregation.lastWeek);

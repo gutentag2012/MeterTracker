@@ -64,7 +64,6 @@ return false;
 
         SwipeRefreshLayout refreshLayout = view.findViewById(R.id.refresh);
         refreshLayout.setOnRefreshListener(() -> {
-            Log.e(TAG, "onCreateView: " + dbHelper.aggregate());
             adapter.setItems(dbHelper.aggregate());
             refreshLayout.setRefreshing(false);
         });

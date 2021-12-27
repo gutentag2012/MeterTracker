@@ -22,10 +22,14 @@ public final class DataReaderContract {
                     DataEntry.COLUMN_NAME_UNIT + " TEXT," +
                     DataEntry.COLUMN_NAME_VALUE + " REAL," +
                     DataEntry.COLUMN_NAME_ORDER + " INTEGER," +
-                    DataEntry.COLUMN_NAME_DATE + " TEXT)";
+                    DataEntry.COLUMN_NAME_DATE + " TEXT," +
+                    DataEntry.COLUMN_NAME_POSITIVE + " INTEGER DEFAULT 0)";
 
     static final String SQL_DELETE_ENTRIES =
             "DROP TABLE IF EXISTS " + DataEntry.TABLE_NAME;
+
+    static final String SQL_UPDATE_ENTRIES_V4_TO_V5 =
+            "ALTER TABLE " + DataEntry.TABLE_NAME + " ADD COLUMN " + DataEntry.COLUMN_NAME_POSITIVE + " INTEGER DEFAULT 0;";
 
     public static final ArrayList<Function<Cursor, Object>> conversions = new ArrayList<Function<Cursor, Object>>() {{
         add(cursor -> cursor.getInt(cursor.getColumnIndexOrThrow(DataEntry._ID)));
@@ -34,6 +38,7 @@ public final class DataReaderContract {
         add(cursor -> cursor.getFloat(cursor.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_VALUE)));
         add(cursor -> cursor.getInt(cursor.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_ORDER)));
         add(cursor -> DateUtils.stringToDate(cursor.getString(cursor.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_DATE))));
+        add(cursor -> cursor.getInt(cursor.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_POSITIVE)) != 0);
     }};
 
     public static final Function<Cursor, String[]> selectConversion = curCSV -> new String[]{
@@ -42,7 +47,8 @@ public final class DataReaderContract {
             curCSV.getString(curCSV.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_UNIT)),
             curCSV.getString(curCSV.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_VALUE)),
             curCSV.getString(curCSV.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_ORDER)),
-            curCSV.getString(curCSV.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_DATE))
+            curCSV.getString(curCSV.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_DATE)),
+            curCSV.getString(curCSV.getColumnIndexOrThrow(DataEntry.COLUMN_NAME_POSITIVE))
     };
 
     private DataReaderContract() {
@@ -55,25 +61,31 @@ public final class DataReaderContract {
         public static final String COLUMN_NAME_VALUE = "value";
         public static final String COLUMN_NAME_ORDER = "entry_order";
         public static final String COLUMN_NAME_DATE = "date";
+        public static final String COLUMN_NAME_POSITIVE = "isHigherPositive";
         public final int id;
         public String type;
         public String unit;
         public float value;
         public int order;
         public Date date;
+        public boolean isHigherPositive;
 
         public DataEntry(int _ID, String type, String unit, float value, int order, Date date) {
+            this(_ID, type, unit, value, order, date, false);
+        }
+
+        public DataEntry(int _ID, String type, String unit, float value, int order, Date date, boolean isHigherPositive) {
             this.id = _ID;
             this.type = type;
             this.unit = unit;
             this.value = value;
             this.order = order;
             this.date = date;
-
+            this.isHigherPositive = isHigherPositive;
         }
 
         public DataEntry(List<Object> row) {
-            this(((int) row.get(0)), ((String) row.get(1)), ((String) row.get(2)), ((float) row.get(3)),((int) row.get(4)),((Date) row.get(5)));
+            this(((int) row.get(0)), ((String) row.get(1)), ((String) row.get(2)), ((float) row.get(3)),((int) row.get(4)),((Date) row.get(5)), ((boolean) row.get(6)));
         }
 
         @Override
@@ -81,12 +93,12 @@ public final class DataReaderContract {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             DataEntry dataEntry = (DataEntry) o;
-            return id == dataEntry.id && Float.compare(dataEntry.value, value) == 0 && order == dataEntry.order && Objects.equals(type, dataEntry.type) && Objects.equals(unit, dataEntry.unit) && Objects.equals(date, dataEntry.date);
+            return id == dataEntry.id && Float.compare(dataEntry.value, value) == 0 && order == dataEntry.order && Objects.equals(type, dataEntry.type) && Objects.equals(unit, dataEntry.unit) && Objects.equals(date, dataEntry.date) && isHigherPositive == dataEntry.isHigherPositive;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(id, type, unit, value, order, date);
+            return Objects.hash(id, type, unit, value, order, date, isHigherPositive);
         }
 
         @NonNull
@@ -99,6 +111,7 @@ public final class DataReaderContract {
                     ", value=" + value +
                     ", order=" + order +
                     ", date=" + date +
+                    ", isHigherPositive=" + isHigherPositive +
                     '}';
         }
     }
