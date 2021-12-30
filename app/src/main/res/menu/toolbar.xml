@@ -2,6 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/toolbar_chart"
+        android:title="@string/_chart"
+        android:icon="@drawable/round_insert_chart_white_24dp"
+        app:showAsAction="ifRoom"/>
+    <item
         android:id="@+id/toolbar_import"
         android:title="@string/_import"
         android:icon="@drawable/round_file_present_white_24dp"

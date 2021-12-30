@@ -30,7 +30,9 @@ import com.joshuagawenda.metertracker.database.DataReaderDBHelper;
 import com.joshuagawenda.metertracker.database.DatabaseAccessor;
 import com.joshuagawenda.metertracker.utils.DateUtils;
 
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.function.Predicate;
 
 public class MainActivity extends AppCompatActivity implements NavController.OnDestinationChangedListener {
     private static final String TAG = "MainActivity";
@@ -59,6 +61,12 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(savedInstanceState!=null) {
+            selectedType = (DataAggregation) savedInstanceState.getSerializable("selectedType");
+            invalidateOptionsMenu();
+        }
+
         setContentView(R.layout.activity_main);
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -104,11 +112,19 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
     }
 
     @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("selectedType", selectedType);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.toolbar_export) {
             DatabaseAccessor.createFileForExport(this);
         } else if (item.getItemId() == R.id.toolbar_import) {
             DatabaseAccessor.openFileForImport(this);
+        } else if (item.getItemId() == R.id.toolbar_chart){
+            getNavController().navigate(R.id.action_global_to_chartFragment);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -130,8 +146,26 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater menuInflater = getMenuInflater();
         NavController navController = getNavController();
-        if (navController != null && navController.getCurrentDestination().getId() != R.id.addMeasurementFragment) {
-            menuInflater.inflate(R.menu.toolbar, menu);
+
+        if(navController!=null) {
+            findViewById(R.id.save_button).setVisibility(navController.getCurrentDestination().getId() != R.id.addMeasurementFragment ? View.GONE : View.VISIBLE);
+            if (this.fab != null) {
+                if (Arrays.asList(R.id.addMeasurementFragment, R.id.chartFragment).contains(navController.getCurrentDestination().getId())) {
+                    this.fab.hide();
+                } else {
+                    this.fab.show();
+                }
+            }
+        }
+
+        Predicate<Integer> isDestination = id -> navController != null && navController.getCurrentDestination().getId() == id;
+        if (isDestination.test(R.id.addMeasurementFragment) || isDestination.test(R.id.chartFragment)) {
+            return true;
+        }
+        menuInflater.inflate(R.menu.toolbar, menu);
+        MenuItem chart_item = menu.findItem(R.id.toolbar_chart);
+        if(chart_item != null) {
+            chart_item.setVisible(isDestination.test(R.id.historyFragment));
         }
         return true;
     }
@@ -139,14 +173,6 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
     @Override
     public void onDestinationChanged(@NonNull NavController controller, @NonNull NavDestination destination, @Nullable Bundle arguments) {
         invalidateOptionsMenu();
-        findViewById(R.id.save_button).setVisibility(destination.getId() != R.id.addMeasurementFragment ? View.GONE : View.VISIBLE);
-        if (this.fab != null) {
-            if (destination.getId() == R.id.addMeasurementFragment) {
-                this.fab.hide();
-            } else {
-                this.fab.show();
-            }
-        }
         if (destination.getId() == R.id.dashboardFragment) {
             this.selectedType = null;
         }

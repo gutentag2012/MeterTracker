@@ -2,7 +2,9 @@ package com.joshuagawenda.metertracker.database;
 
 import androidx.annotation.NonNull;
 
-public class DataAggregation {
+import java.io.Serializable;
+
+public class DataAggregation implements Serializable {
     public final String type;
     public final String unit;
     public final int order;

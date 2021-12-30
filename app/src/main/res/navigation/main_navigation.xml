@@ -20,12 +20,24 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_global_to_chartFragment"
+            app:destination="@id/chartFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
     </fragment>
     <fragment
         android:id="@+id/addMeasurementFragment"
         android:name="com.joshuagawenda.metertracker.AddMeasurementFragment"
         android:label="@string/addMeasurement"
         tools:layout="@layout/fragment_add_measurement" />
+    <fragment
+        android:id="@+id/chartFragment"
+        android:name="com.joshuagawenda.metertracker.ChartFragment"
+        android:label="@string/chart"
+        tools:layout="@layout/fragment_chart" />
     <fragment
         android:id="@+id/historyFragment"
         android:name="com.joshuagawenda.metertracker.HistoryFragment"
@@ -34,6 +46,13 @@
         <action
             android:id="@+id/action_global_to_addMeasurementFragment"
             app:destination="@id/addMeasurementFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
+            android:id="@+id/action_global_to_chartFragment"
+            app:destination="@id/chartFragment"
             app:enterAnim="@anim/slide_in_right"
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"

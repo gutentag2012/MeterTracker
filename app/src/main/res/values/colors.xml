@@ -23,4 +23,21 @@
     <color name="error">#FFDC5454</color>
     <color name="success">#FF94BC54</color>
     <color name="warning">#FFD48A1B</color>
+
+    <color name="chart_0_transparent">#41003F5C</color>
+    <color name="chart_0">#003F5C</color>
+    <color name="chart_1_transparent">#412f4b7c</color>
+    <color name="chart_1">#2f4b7c</color>
+    <color name="chart_2_transparent">#41665191</color>
+    <color name="chart_2">#665191</color>
+    <color name="chart_3_transparent">#41a05195</color>
+    <color name="chart_3">#a05195</color>
+    <color name="chart_4_transparent">#41d45087</color>
+    <color name="chart_4">#d45087</color>
+    <color name="chart_5_transparent">#41f95d6a</color>
+    <color name="chart_5">#f95d6a</color>
+    <color name="chart_6_transparent">#41ff7c43</color>
+    <color name="chart_6">#ff7c43</color>
+    <color name="chart_7_transparent">#41ffa600</color>
+    <color name="chart_7">#ffa600</color>
 </resources>

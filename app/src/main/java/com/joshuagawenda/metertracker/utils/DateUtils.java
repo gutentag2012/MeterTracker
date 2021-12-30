@@ -14,9 +14,27 @@ import java.util.Date;
 import java.util.Locale;
 
 public class DateUtils {
-    public static String dateToString(Date date) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+    public static int getFromDate(Date date, int field){
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        return cal.get(field);
+    }
+    public static int getYear(Date date) {
+        return getFromDate(date, Calendar.YEAR);
+    }
+    public static int getMonth(Date date) {
+        return getFromDate(date, Calendar.MONTH);
+    }
+    public static int getDay(Date date) {
+        return getFromDate(date, Calendar.DAY_OF_YEAR);
+    }
+
+    public static String dateToString(Date date, String format) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format, Locale.getDefault());
         return simpleDateFormat.format(date);
+    }
+    public static String dateToString(Date date) {
+        return dateToString(date, "dd/MM/yyyy");
     }
 
     public static Date stringToDate(String string) {
