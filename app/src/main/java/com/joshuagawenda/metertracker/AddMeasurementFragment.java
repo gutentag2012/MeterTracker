@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.CheckBox;
 
 import androidx.fragment.app.Fragment;
@@ -39,12 +40,13 @@ public class AddMeasurementFragment extends Fragment {
     TextInputEditText measurementTextView;
     TextInputEditText dateTextView;
     TextInputEditText valueTextView;
-    private TextInputLayout dateTextViewLayout;
     CheckBox higherPreferredCheckBox;
+    private TextInputLayout dateTextViewLayout;
     private Date date = new Date();
     private DataReaderContract.DataEntry entry;
     private DataAggregation aggregation;
     private int order = -1;
+    private Button deleteBtn;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,16 +57,21 @@ public class AddMeasurementFragment extends Fragment {
             String unit = arguments.getString("unit");
             int order = arguments.getInt("order");
             boolean isHigherPositive = arguments.getBoolean("isHigherPositive");
-            if(arguments.getBoolean("isEntry")) {
+            if (arguments.getBoolean("isEntry")) {
                 int id = arguments.getInt("id");
                 float value = arguments.getFloat("value");
                 this.date = DateUtils.stringToDate(arguments.getString("date"));
                 entry = new DataReaderContract.DataEntry(id, type, unit, value, order, this.date, isHigherPositive);
             } else {
-                aggregation = new DataAggregation(type, unit, order, isHigherPositive, "", 0, 0, 0);
+                aggregation = new DataAggregation(type, unit, order, isHigherPositive, "", 0, 0, 0, 0);
             }
         }
     }
+
+    // TODO Export Picture of graph
+    // TODO Filter years graph
+
+    // TODO Warn duplicate entries
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -83,10 +90,11 @@ public class AddMeasurementFragment extends Fragment {
         this.typeFieldLayout = view.findViewById(R.id.type_layout);
         this.measurementTextViewLayout = view.findViewById(R.id.measurement_unit_layout);
         this.valueTextViewLayout = view.findViewById(R.id.value_layout);
+        this.deleteBtn = view.findViewById(R.id.delete_btn);
 
-        if(this.aggregation != null) {
-           this.valueTextViewLayout.setVisibility(View.GONE);
-           this.dateTextViewLayout.setVisibility(View.GONE);
+        if (this.aggregation != null) {
+            this.valueTextViewLayout.setVisibility(View.GONE);
+            this.dateTextViewLayout.setVisibility(View.GONE);
         }
 
         if (this.entry != null) {
@@ -95,6 +103,11 @@ public class AddMeasurementFragment extends Fragment {
             valueTextView.setText(String.valueOf(this.entry.value));
             dateTextView.setText(DateUtils.dateToString(this.entry.date));
             higherPreferredCheckBox.setChecked(this.entry.isHigherPositive);
+            deleteBtn.setVisibility(View.VISIBLE);
+            deleteBtn.setOnClickListener(e -> {
+                dbHelper.delete(this.entry);
+                ((MainActivity) getActivity()).getNavController().navigateUp();
+            });
         }
 
         TypeDropdownAdapter adapter = new TypeDropdownAdapter(requireContext(), dbHelper.getAllTypes());
@@ -104,6 +117,7 @@ public class AddMeasurementFragment extends Fragment {
             Log.e("TAG", "SELECTED" + Arrays.toString(item));
             measurementTextView.setText(item[1]);
             this.order = Integer.parseInt(item[2]);
+            // TODO Do not get last, but previous value
             this.valueTextViewLayout.setHelperText(getString(R.string.last_value, Float.parseFloat(item[3]), item[1]));
             higherPreferredCheckBox.setChecked(Boolean.parseBoolean(item[4]));
         });
@@ -115,11 +129,14 @@ public class AddMeasurementFragment extends Fragment {
                 typeField.setText(selectedType.type, false);
                 measurementTextView.setText(selectedType.unit);
                 higherPreferredCheckBox.setChecked(selectedType.isHigherPositive);
-                valueTextView.requestFocus();
-                List<DataReaderContract.DataEntry> dataEntries = dbHelper.selectAll(selectedType.type, selectedType.unit, 1);
-                if (dataEntries.size() > 0) {
-                    this.valueTextViewLayout.setHelperText(getString(R.string.last_value, dataEntries.get(0).value, selectedType.unit));
-                }
+                List<DataReaderContract.DataEntry> oldEntries = dbHelper.selectAll(selectedType.type, selectedType.unit, 2);
+                float oldValue = oldEntries.size() > 1 && oldEntries.get(0).value == 0
+                        ? oldEntries.get(1).value
+                        : oldEntries.size() > 0
+                        ? oldEntries.get(0).value
+                        : 0f;
+                // TODO Do not get last, but previous value
+                this.valueTextViewLayout.setHelperText(getString(R.string.last_value, oldValue, selectedType.unit));
             }
         }
 
@@ -159,13 +176,13 @@ public class AddMeasurementFragment extends Fragment {
         }
         String unit = measurementTextView.getText().toString();
 
-        if(this.aggregation != null && !error) {
+        if (this.aggregation != null && !error) {
             DataAggregation newAggregation = new DataAggregation(
                     type,
                     unit,
                     this.aggregation.order,
                     isHigherPositive,
-                    "", 0, 0, 0
+                    "", 0, 0, 0, 0
             );
             dbHelper.updateFromAggregation(this.aggregation, newAggregation);
             ((MainActivity) getActivity()).getNavController().navigateUp();

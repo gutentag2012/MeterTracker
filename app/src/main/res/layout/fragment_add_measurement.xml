@@ -71,10 +71,24 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/value"
+            android:selectAllOnFocus="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:imeOptions="actionDone"
             android:inputType="number|numberDecimal" />
     </com.google.android.material.textfield.TextInputLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <Button
+        android:visibility="gone"
+        android:id="@+id/delete_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/delete"
+        style="@style/ButtonError"/>
 
 </LinearLayout>

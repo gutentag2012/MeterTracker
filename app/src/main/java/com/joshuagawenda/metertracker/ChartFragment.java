@@ -1,16 +1,19 @@
 package com.joshuagawenda.metertracker;
 
+import static com.joshuagawenda.metertracker.utils.DateUtils.dateToString;
 import static com.joshuagawenda.metertracker.utils.DateUtils.getFromDate;
 import static com.joshuagawenda.metertracker.utils.DateUtils.getMonth;
 import static com.joshuagawenda.metertracker.utils.DateUtils.getYear;
 import static java.util.stream.Collectors.toList;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -18,6 +21,7 @@ import androidx.fragment.app.Fragment;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.MarkerView;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
@@ -27,9 +31,11 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.EntryXComparator;
+import com.github.mikephil.charting.utils.MPPointF;
 import com.joshuagawenda.metertracker.database.DataAggregation;
 import com.joshuagawenda.metertracker.database.DataReaderContract.DataEntry;
 import com.joshuagawenda.metertracker.database.DataReaderDBHelper;
@@ -87,9 +93,14 @@ public class ChartFragment extends Fragment {
 
         LineChart lineChart = view.findViewById(R.id.line_chart);
         BarChart barChart = view.findViewById(R.id.bar_chart);
-        barChart.setVisibility(View.GONE);
-        setupLineChart(lineChart, colors, cal, type, dataEntries);
-//        setupBarChart(barChart, colors, cal, type, dataEntries);
+        lineChart.setVisibility(View.GONE);
+//        setupLineChart(lineChart, colors, cal, type, dataEntries);
+        setupBarChart(barChart, colors, cal, type, dataEntries);
+
+        MainActivity.onExport = () -> {
+            barChart.saveToGallery("chart");
+        };
+
         return view;
     }
 
@@ -111,7 +122,7 @@ public class ChartFragment extends Fragment {
                                 cal.set(Calendar.WEEK_OF_MONTH, fromDate);
                                 float timeInMillis = cal.getTimeInMillis();
                                 float value_diff = ee[0].value - ee[1].value;
-                                return new Entry(timeInMillis, value_diff);
+                                return new Entry(timeInMillis, value_diff, ee[0]);
                             })
                             .sorted(new EntryXComparator())
                             .collect(toList());
@@ -163,7 +174,7 @@ public class ChartFragment extends Fragment {
 
     private void setupBarChart(BarChart barChart, ArrayDeque<Integer> colors, Calendar cal, DataAggregation type, @NonNull List<DataEntry> dataEntries) {
         float start = 0f;
-        List<IBarDataSet> typeMap = dataEntries.stream()
+        List<IBarDataSet> types = dataEntries.stream()
                 .collect(Collectors.groupingBy(e -> getYear(e.date)))
                 .entrySet()
                 .stream()
@@ -173,14 +184,8 @@ public class ChartFragment extends Fragment {
                             .mapToObj(i -> new DataEntry[]{value.get(i - 1), value.get(i)})
                             .map(ee -> {
                                 Date date = ee[0].date;
-                                cal.setTimeInMillis(0L);
-                                int month = getMonth(date);
-                                int fromDate = getFromDate(date, Calendar.WEEK_OF_MONTH);
-                                cal.set(Calendar.MONTH, month);
-                                cal.set(Calendar.WEEK_OF_MONTH, fromDate);
-                                float timeInMillis = cal.getTimeInMillis();
                                 float value_diff = ee[0].value - ee[1].value;
-                                return new BarEntry(timeInMillis, value_diff);
+                                return new BarEntry(getFromDate(date, Calendar.WEEK_OF_YEAR), value_diff, ee[0]);
                             })
                             .sorted(new EntryXComparator())
                             .collect(toList());
@@ -191,16 +196,23 @@ public class ChartFragment extends Fragment {
                     return barDataSet;
                 })
                 .collect(toList());
-        BarData data = new BarData(typeMap);
+        BarData data = new BarData(types);
         XAxis xAxis = barChart.getXAxis();
+        xAxis.setCenterAxisLabels(true);
+        xAxis.setGranularity(1);
+        xAxis.setDrawGridLines(false);
+        xAxis.setLabelCount(12);
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setValueFormatter(new IndexAxisValueFormatter() {
+//            final Calendar cal = Calendar.getInstance();
             @Override
             public String getFormattedValue(float value) {
-                return DateUtils.dateToString(new Date((long) value), "MMMM");
+//                cal.setTimeInMillis(1);
+//                cal.set(Calendar.WEEK_OF_YEAR, ((int) value));
+//                return dateToString(cal.getTime(), "MMMM (W)");
+                return String.valueOf((int) value);
             }
         });
-        xAxis.setLabelCount(6);
         xAxis.setTextColor(Color.WHITE);
         YAxis yAxis = barChart.getAxisLeft();
         yAxis.setValueFormatter(new IndexAxisValueFormatter() {
@@ -214,13 +226,48 @@ public class ChartFragment extends Fragment {
         barChart.getLegend().setTextColor(Color.WHITE);
         barChart.getDescription().setEnabled(false);
         barChart.setMaxVisibleValueCount(30);
-        barChart.setScaleMinima(1.5f, 1f);
+        barChart.setScaleMinima(1f, 1f);
         barChart.setScaleYEnabled(false);
         barChart.setBorderColor(Color.WHITE);
-        data.setBarWidth(6E8f);
         barChart.setFitBars(true);
+        float barWidth = 0.3f;
+        float barSpace = 0f;
+        float groupSpace = 1f - ((barSpace + barWidth) * types.size());
+        data.setBarWidth(barWidth);
         barChart.setData(data);
-        barChart.groupBars(0f, 2E8f, 1E7f);
+        barChart.groupBars(1f, groupSpace, barSpace);
+        ValueMarkerView mv = new ValueMarkerView(requireContext(), R.layout.element_chart_value_popup);
+        barChart.setMarker(mv);
         barChart.invalidate();
+    }
+
+    private static class ValueMarkerView extends MarkerView {
+
+        private final TextView contentView;
+        private final TextView contentDateView;
+        public ValueMarkerView(Context context, int layoutResource) {
+            super(context, layoutResource);
+            contentView = (TextView) findViewById(R.id.content);
+            contentDateView = (TextView) findViewById(R.id.content_date);
+        }
+
+        // callbacks everytime the MarkerView is redrawn, can be used to update the
+// content (user-interface)
+        @Override
+        public void refreshContent(Entry e, Highlight highlight) {
+            contentView.setText(String.valueOf(e.getY()));
+            contentDateView.setText(DateUtils.dateToString(((DataEntry) e.getData()).date));
+            super.refreshContent(e, highlight);
+        }
+
+        private MPPointF mOffset;
+
+        @Override
+        public MPPointF getOffset() {
+            if(mOffset == null) {
+                mOffset = new MPPointF(-(getWidth() / 2f), -getHeight());
+            }
+            return mOffset;
+        }
     }
 }

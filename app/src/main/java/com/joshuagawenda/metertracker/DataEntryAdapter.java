@@ -20,15 +20,10 @@ import java.util.Locale;
 
  public class DataEntryAdapter extends RecyclerView.Adapter<DataEntryAdapter.ViewHolder> {
     private final List<DataReaderContract.DataEntry> entries;
-     private Consumer<DataReaderContract.DataEntry> onDelete;
      private Consumer<DataReaderContract.DataEntry> onUpdate;
 
      public DataEntryAdapter(List<DataReaderContract.DataEntry> entries) {
         this.entries = entries;
-     }
-
-     public void setOnDelete(Consumer<DataReaderContract.DataEntry> onDelete) {
-         this.onDelete = onDelete;
      }
 
      public void setOnUpdate(Consumer<DataReaderContract.DataEntry> onUpdate) {
@@ -91,11 +86,6 @@ import java.util.Locale;
             super.itemView.setOnClickListener(v -> {
                 if(onUpdate!=null)
                     onUpdate.accept(entry);
-            });
-            super.itemView.setOnLongClickListener(view -> {
-                if(onDelete!=null)
-                    onDelete.accept(entry);
-                return true;
             });
         }
     }

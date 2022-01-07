@@ -7,6 +7,7 @@
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/drawable/round_share_white_24dp.xml" value="0.2708333333333333" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/activity_main.xml" value="0.2" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_aggregate_data.xml" value="0.268" />
+        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_chart_value_popup.xml" value="0.36770833333333336" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_data_entry.xml" value="0.36" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/element_dropdown.xml" value="0.44000000000000006" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/fragment_add_measurement.xml" value="0.268" />
@@ -14,6 +15,7 @@
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/fragment_dashboard.xml" value="0.32395833333333335" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/layout/fragment_history.xml" value="0.268" />
         <entry key="..\:/Projekte/MeterTracker/app/src/main/res/menu/toolbar.xml" value="0.32395833333333335" />
+        <entry key="..\:/Projekte/MeterTracker/app/src/main/res/menu/toolbar_chart.xml" value="0.1984375" />
       </map>
     </option>
   </component>

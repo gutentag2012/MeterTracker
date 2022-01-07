@@ -93,7 +93,7 @@ public final class DataReaderContract {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             DataEntry dataEntry = (DataEntry) o;
-            return id == dataEntry.id && Float.compare(dataEntry.value, value) == 0 && order == dataEntry.order && Objects.equals(type, dataEntry.type) && Objects.equals(unit, dataEntry.unit) && Objects.equals(date, dataEntry.date) && isHigherPositive == dataEntry.isHigherPositive;
+            return id == dataEntry.id && Float.compare(dataEntry.value, value) == 0 && order == dataEntry.order && isHigherPositive == dataEntry.isHigherPositive && Objects.equals(type, dataEntry.type) && Objects.equals(unit, dataEntry.unit) && Objects.equals(date, dataEntry.date);
         }
 
         @Override

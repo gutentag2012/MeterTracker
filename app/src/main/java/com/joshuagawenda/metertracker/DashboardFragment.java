@@ -1,6 +1,9 @@
 package com.joshuagawenda.metertracker;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -8,11 +11,6 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 
 import com.joshuagawenda.metertracker.database.DataReaderDBHelper;
 
@@ -50,7 +48,7 @@ public class DashboardFragment extends Fragment {
                 int fromPosition = viewHolder.getAdapterPosition();
                 int toPosition = target.getAdapterPosition();
                 adapter.swap(fromPosition, toPosition);
-return false;
+                return false;
             }
 
             @Override

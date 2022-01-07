@@ -71,6 +71,11 @@
         <item name="android:textColor">@color/on_primary</item>
     </style>
 
+    <style name="ButtonError" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/on_primary</item>
+        <item name="backgroundTint">@color/error</item>
+    </style>
+
     <style name="ButtonPrimaryIcon" parent="Widget.MaterialComponents.Button.Icon" />
 
     <style name="ButtonSecondary" parent="Widget.MaterialComponents.Button.OutlinedButton" />

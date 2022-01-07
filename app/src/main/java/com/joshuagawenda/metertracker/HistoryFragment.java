@@ -50,7 +50,8 @@ public class HistoryFragment extends Fragment {
             float averageMonth = getArguments().getFloat("averageMonth");
             float lastWeek = getArguments().getFloat("lastWeek");
             float monthlyDifference = getArguments().getFloat("monthlyDifference");
-            this.aggregation = new DataAggregation(type, unit, order, isHigherPositive, lastDate, lastWeek, averageMonth, monthlyDifference);
+            float lastValue = getArguments().getFloat("lastValue");
+            this.aggregation = new DataAggregation(type, unit, order, isHigherPositive, lastDate, lastWeek, averageMonth, monthlyDifference, lastValue);
         }
     }
 
@@ -99,20 +100,6 @@ public class HistoryFragment extends Fragment {
         List<DataReaderContract.DataEntry> dataEntries = dbHelper.selectAll(this.aggregation.type, this.aggregation.unit);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         adapter = new DataEntryAdapter(dataEntries);
-        adapter.setOnDelete(entry -> {
-            dbHelper.delete(entry);
-            update(dbHelper);
-            if (this.getView() != null)
-                Snackbar.make(
-                        this.getView(),
-                        "Removed entry from " + DateUtils.dateToString(entry.date),
-                        Snackbar.LENGTH_LONG)
-                        .setAction("Undo", v -> {
-                            dbHelper.insertAll(entry);
-                            update(dbHelper);
-                        })
-                        .show();
-        });
         adapter.setOnUpdate(entry -> {
             Bundle bundle = new Bundle();
             bundle.putBoolean("isEntry", true);

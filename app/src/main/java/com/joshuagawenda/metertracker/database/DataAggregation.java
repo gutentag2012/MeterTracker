@@ -13,6 +13,7 @@ public class DataAggregation implements Serializable {
     public final float lastWeek;
     public final float average;
     public final float monthlyDifference;
+    public float lastValue;
 
     public String getType() {
         return type;
@@ -22,7 +23,7 @@ public class DataAggregation implements Serializable {
         return order;
     }
 
-    public DataAggregation(String type, String unit, int order, boolean isHigherPositive, String lastDate, float lastWeek, float average, float monthlyDifference) {
+    public DataAggregation(String type, String unit, int order, boolean isHigherPositive, String lastDate, float lastWeek, float average, float monthlyDifference, float lastValue) {
         this.type = type;
         this.unit = unit;
         this.order = order;
@@ -31,6 +32,7 @@ public class DataAggregation implements Serializable {
         this.lastWeek = lastWeek;
         this.average = average;
         this.monthlyDifference = monthlyDifference;
+        this.lastValue = lastValue;
     }
 
     @NonNull

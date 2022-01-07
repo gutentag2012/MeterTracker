@@ -5,6 +5,7 @@
     <string name="_import">Import</string>
     <string name="_export">Export</string>
     <string name="_chart">Chart</string>
+    <string name="_filter">Filter</string>
     <string name="dashboard">Dashboard</string>
     <string name="addMeasurement">Add Measurement</string>
     <string name="chart">Chart</string>
@@ -24,4 +25,5 @@
     <string name="subtitle_deviation">deviation</string>
     <string name="placeholder_percent">+ 0.07%</string>
     <string name="higher_numbers_are_preferred">Positive numbers are preferred</string>
+    <string name="delete">Delete</string>
 </resources>

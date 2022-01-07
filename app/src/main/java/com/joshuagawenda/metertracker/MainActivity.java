@@ -26,24 +26,30 @@ import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.joshuagawenda.metertracker.database.DataAggregation;
+import com.joshuagawenda.metertracker.database.DataReaderContract;
 import com.joshuagawenda.metertracker.database.DataReaderDBHelper;
 import com.joshuagawenda.metertracker.database.DatabaseAccessor;
 import com.joshuagawenda.metertracker.utils.DateUtils;
 
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.function.Predicate;
 
 public class MainActivity extends AppCompatActivity implements NavController.OnDestinationChangedListener {
     private static final String TAG = "MainActivity";
 
+    public static Runnable onExport;
+    public static Runnable onFilter;
+
     public DataAggregation selectedType = null;
     private FloatingActionButton fab;
+    private DataReaderDBHelper dbHelper;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        DataReaderDBHelper dbHelper = new DataReaderDBHelper(this);
         if (resultCode == RESULT_OK && requestCode == CSV_DATA_CREATE_REQUEST && data != null) {
             Uri uri = data.getData();
             DatabaseAccessor.exportDatabase(this, dbHelper, uri);
@@ -61,8 +67,9 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.dbHelper = new DataReaderDBHelper(this);
 
-        if(savedInstanceState!=null) {
+        if (savedInstanceState != null) {
             selectedType = (DataAggregation) savedInstanceState.getSerializable("selectedType");
             invalidateOptionsMenu();
         }
@@ -104,6 +111,23 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
             cal.set(Calendar.HOUR_OF_DAY, 12);
             cal.set(Calendar.MINUTE, 0);
             cal.set(Calendar.SECOND, 0);
+            // TODO Add entries for every missing week
+            for (String[] allType : this.dbHelper.getAllTypes()) {
+                String type = allType[0];
+                String unit = allType[1];
+                List<DataReaderContract.DataEntry> oldEntries = dbHelper.selectAll(type, unit, 1);
+                if (oldEntries.size() > 0 && oldEntries.get(0).value == 0)
+                    continue;
+                this.dbHelper.insertAll(new DataReaderContract.DataEntry(
+                        0,
+                        type,
+                        unit,
+                        0f,
+                        Integer.parseInt(allType[2]),
+                        new Date(),
+                        Boolean.parseBoolean(allType[4])
+                ));
+            }
             Log.e(TAG, "Create Reminder at " + cal.getTime());
             main.edit().putString("lastReminder", DateUtils.dateToString(cal.getTime())).apply();
             NotificationReceiver.scheduleNotification(this, cal.getTimeInMillis(), title, text);
@@ -123,8 +147,14 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
             DatabaseAccessor.createFileForExport(this);
         } else if (item.getItemId() == R.id.toolbar_import) {
             DatabaseAccessor.openFileForImport(this);
-        } else if (item.getItemId() == R.id.toolbar_chart){
+        } else if (item.getItemId() == R.id.toolbar_chart) {
             getNavController().navigate(R.id.action_global_to_chartFragment);
+        } else if (item.getItemId() == R.id.toolbar_chart_export) {
+            if (onExport != null)
+                onExport.run();
+        } else if (item.getItemId() == R.id.toolbar_chart_filter) {
+            if (onFilter != null)
+                onFilter.run();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -147,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
         MenuInflater menuInflater = getMenuInflater();
         NavController navController = getNavController();
 
-        if(navController!=null) {
+        if (navController != null) {
             findViewById(R.id.save_button).setVisibility(navController.getCurrentDestination().getId() != R.id.addMeasurementFragment ? View.GONE : View.VISIBLE);
             if (this.fab != null) {
                 if (Arrays.asList(R.id.addMeasurementFragment, R.id.chartFragment).contains(navController.getCurrentDestination().getId())) {
@@ -159,12 +189,16 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
         }
 
         Predicate<Integer> isDestination = id -> navController != null && navController.getCurrentDestination().getId() == id;
-        if (isDestination.test(R.id.addMeasurementFragment) || isDestination.test(R.id.chartFragment)) {
+        if (isDestination.test(R.id.addMeasurementFragment)) {
+            return true;
+        }
+        if(isDestination.test(R.id.chartFragment)) {
+            menuInflater.inflate(R.menu.toolbar_chart, menu);
             return true;
         }
         menuInflater.inflate(R.menu.toolbar, menu);
         MenuItem chart_item = menu.findItem(R.id.toolbar_chart);
-        if(chart_item != null) {
+        if (chart_item != null) {
             chart_item.setVisible(isDestination.test(R.id.historyFragment));
         }
         return true;

@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class DateUtils {
     public static int getFromDate(Date date, int field){
@@ -27,6 +28,10 @@ public class DateUtils {
     }
     public static int getDay(Date date) {
         return getFromDate(date, Calendar.DAY_OF_YEAR);
+    }
+
+    public static long getDaysBetween(Date a, Date b) {
+        return TimeUnit.MILLISECONDS.toDays(b.getTime() - a.getTime());
     }
 
     public static String dateToString(Date date, String format) {

@@ -85,7 +85,7 @@ public class DataAggregationAdapter extends RecyclerView.Adapter<DataAggregation
         }
 
         public void bind(DataAggregation dataAggregation) {
-            this.title.setText(dataAggregation.type);
+            this.title.setText(String.format("%s%s", dataAggregation.type, dataAggregation.lastValue == 0 ? " *" : ""));
             this.last_week.setText(String.format(Locale.getDefault(), "%s%.2f", dataAggregation.lastWeek >= 0 ? "+" : "", dataAggregation.lastWeek));
             this.average_month.setText(String.format(Locale.getDefault(), "%s%.2f", dataAggregation.average >= 0 ? "+" : "", dataAggregation.average));
             boolean positive = dataAggregation.monthlyDifference >= 0;
@@ -106,6 +106,7 @@ public class DataAggregationAdapter extends RecyclerView.Adapter<DataAggregation
                 bundle.putFloat("averageMonth", dataAggregation.average);
                 bundle.putFloat("lastWeek", dataAggregation.lastWeek);
                 bundle.putFloat("monthlyDifference", dataAggregation.monthlyDifference);
+                bundle.putFloat("lastValue", dataAggregation.lastValue);
                 mainActivity.getNavController().navigate(R.id.action_dashboardFragment_to_historyFragment, bundle);
             });
         }

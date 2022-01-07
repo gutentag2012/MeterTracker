@@ -34,6 +34,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -149,6 +150,16 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                 }
                 rows.add(new DataReaderContract.DataEntry(objects));
             }
+            Collections.reverse(rows);
+            List<DataReaderContract.DataEntry> toRemove = new ArrayList<>();
+            for (DataReaderContract.DataEntry entry : rows) {
+                if (entry.value != 0) {
+                    break;
+                }
+                toRemove.add(entry);
+            }
+            rows.removeAll(toRemove);
+            Collections.reverse(rows);
             return rows;
         } catch (Exception ignored) {
             return new ArrayList<>();
@@ -187,14 +198,15 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                         .map(e -> e.replaceAll("\"", ""))
                         .toArray(String[]::new);
                 try {
-                    int reduce = split.length == 6 ? 0 : 1;
+                    int reduce = split.length == 7 ? 0 : 1;
                     return new DataReaderContract.DataEntry(
                             0,
                             split[1 - reduce],
                             split[2 - reduce],
                             Float.parseFloat(split[3 - reduce]),
                             Integer.parseInt(split[4 - reduce]),
-                            DateUtils.stringToDate(split[5 - reduce]));
+                            DateUtils.stringToDate(split[5 - reduce]),
+                            !split[6 - reduce].equals("0"));
                 } catch (RuntimeException e) {
                     try {
                         int reduce = split.length == 5 ? 0 : 1;
@@ -238,9 +250,15 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                         return current.value - last.value;
                     }).toArray();
             // Average of the last 4 Weeks differences
-            double averageCurrent = Arrays.stream(differences).limit(4).average().orElse(0);
+            double averageCurrent = Arrays.stream(differences).skip(1).limit(4).average().orElse(0);
             // Deviation of the current difference to the average
             double deviation = ((differences[0] - averageCurrent) / (averageCurrent + 0.0f)) * 100.0f;
+            if (Double.isInfinite(deviation)) {
+                deviation = 100;
+            }
+            if (Double.isNaN(deviation)) {
+                deviation = 0;
+            }
 
             String[] split = key.split(";");
             String type = split[0];
@@ -254,7 +272,8 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                     data.size() > 0 ? DateUtils.dateToString(data.get(0).date) : "-",
                     data.size() > 1 ? data.get(0).value - data.get(1).value : 0,
                     ((float) averageCurrent),
-                    (float) deviation
+                    (float) deviation,
+                    data.get(0).value
             ));
         });
         aggregations.sort(Comparator.comparing(DataAggregation::getOrder).thenComparing(DataAggregation::getType));
@@ -290,8 +309,12 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                 String unit = cursor.getString(cursor.getColumnIndexOrThrow(DataReaderContract.DataEntry.COLUMN_NAME_UNIT));
                 boolean isHigherPositive = cursor.getInt(cursor.getColumnIndexOrThrow(DataReaderContract.DataEntry.COLUMN_NAME_POSITIVE)) != 0;
                 int order = cursor.getInt(cursor.getColumnIndexOrThrow(DataReaderContract.DataEntry.COLUMN_NAME_ORDER));
-                List<DataReaderContract.DataEntry> oldEntries = this.selectAll(type, unit, 1);
-                float oldValue = oldEntries.size() > 0 ? oldEntries.get(0).value : 0f;
+                List<DataReaderContract.DataEntry> oldEntries = this.selectAll(type, unit, 2);
+                float oldValue = oldEntries.size() > 1 && oldEntries.get(0).value == 0
+                        ? oldEntries.get(1).value
+                        : oldEntries.size() > 0
+                        ? oldEntries.get(0).value
+                        : 0f;
                 entries.add(new String[]{type, unit, String.valueOf(order), String.valueOf(oldValue), String.valueOf(isHigherPositive)});
             }
             return entries;
