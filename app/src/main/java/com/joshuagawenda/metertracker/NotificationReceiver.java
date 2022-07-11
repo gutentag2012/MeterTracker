@@ -9,6 +9,7 @@ import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.media.RingtoneManager;
 import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
@@ -49,10 +50,13 @@ public class NotificationReceiver extends BroadcastReceiver {
         PendingIntent resultPendingIntent =
                 stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setPriority(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? NotificationManager.IMPORTANCE_HIGH : NotificationCompat.PRIORITY_MAX)
+                .setFullScreenIntent(resultPendingIntent, true)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentIntent(resultPendingIntent)
                 .setContentTitle(intent.getStringExtra("title"))
                 .setContentText(intent.getStringExtra("text"))
-                .setContentIntent(resultPendingIntent)
                 .build();
         // Show notification
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

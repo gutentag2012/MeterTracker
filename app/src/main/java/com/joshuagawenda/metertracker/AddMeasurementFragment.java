@@ -1,5 +1,6 @@
 package com.joshuagawenda.metertracker;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.method.DigitsKeyListener;
@@ -11,7 +12,10 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -20,7 +24,6 @@ import com.joshuagawenda.metertracker.database.DataReaderContract;
 import com.joshuagawenda.metertracker.database.DataReaderDBHelper;
 import com.joshuagawenda.metertracker.utils.DateUtils;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -68,11 +71,6 @@ public class AddMeasurementFragment extends Fragment {
         }
     }
 
-    // TODO Export Picture of graph
-    // TODO Filter years graph
-
-    // TODO Warn duplicate entries
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -92,58 +90,36 @@ public class AddMeasurementFragment extends Fragment {
         this.valueTextViewLayout = view.findViewById(R.id.value_layout);
         this.deleteBtn = view.findViewById(R.id.delete_btn);
 
+        FragmentActivity rawActivity = getActivity();
+        boolean isMainActivity = rawActivity instanceof MainActivity;
+
         if (this.aggregation != null) {
             this.valueTextViewLayout.setVisibility(View.GONE);
             this.dateTextViewLayout.setVisibility(View.GONE);
         }
 
         if (this.entry != null) {
-            typeField.setText(this.entry.type);
-            measurementTextView.setText(this.entry.unit);
-            valueTextView.setText(String.valueOf(this.entry.value));
-            dateTextView.setText(DateUtils.dateToString(this.entry.date));
-            higherPreferredCheckBox.setChecked(this.entry.isHigherPositive);
-            deleteBtn.setVisibility(View.VISIBLE);
-            deleteBtn.setOnClickListener(e -> {
-                dbHelper.delete(this.entry);
-                ((MainActivity) getActivity()).getNavController().navigateUp();
-            });
+            selectForEntry(rawActivity, isMainActivity);
         }
 
         TypeDropdownAdapter adapter = new TypeDropdownAdapter(requireContext(), dbHelper.getAllTypes());
         typeField.setAdapter(adapter);
         typeField.setOnItemClickListener((adapterView, view1, i, l) -> {
             String[] item = adapter.getItem(i);
-            Log.e("TAG", "SELECTED" + Arrays.toString(item));
             measurementTextView.setText(item[1]);
             this.order = Integer.parseInt(item[2]);
-            // TODO Do not get last, but previous value
             this.valueTextViewLayout.setHelperText(getString(R.string.last_value, Float.parseFloat(item[3]), item[1]));
             higherPreferredCheckBox.setChecked(Boolean.parseBoolean(item[4]));
         });
 
-        if (getActivity() instanceof MainActivity) {
-            MainActivity activity = (MainActivity) getActivity();
-            DataAggregation selectedType = activity.selectedType;
-            if (selectedType != null) {
-                typeField.setText(selectedType.type, false);
-                measurementTextView.setText(selectedType.unit);
-                higherPreferredCheckBox.setChecked(selectedType.isHigherPositive);
-                List<DataReaderContract.DataEntry> oldEntries = dbHelper.selectAll(selectedType.type, selectedType.unit, 2);
-                float oldValue = oldEntries.size() > 1 && oldEntries.get(0).value == 0
-                        ? oldEntries.get(1).value
-                        : oldEntries.size() > 0
-                        ? oldEntries.get(0).value
-                        : 0f;
-                // TODO Do not get last, but previous value
-                this.valueTextViewLayout.setHelperText(getString(R.string.last_value, oldValue, selectedType.unit));
-            }
+        if (isMainActivity) {
+            setupSelectedTypeFromScreen((MainActivity) rawActivity);
         }
 
         dateTextView.setText(DateUtils.dateToString(this.date));
         dateTextView.setOnClickListener(v ->
                 DateUtils.displayDatePicker(
-                        getActivity().getSupportFragmentManager(),
+                        rawActivity.getSupportFragmentManager(),
                         this.date,
                         "Select a Date",
                         date -> dateTextView.setText(DateUtils.dateToString(this.date = date)),
@@ -156,10 +132,52 @@ public class AddMeasurementFragment extends Fragment {
             return true;
         });
 
-        getActivity().findViewById(R.id.save_button).setOnClickListener(v -> {
+        rawActivity.findViewById(R.id.save_button).setOnClickListener(v -> {
             save();
         });
         return view;
+    }
+
+    private void selectForEntry(FragmentActivity rawActivity, boolean isMainActivity) {
+        typeField.setText(this.entry.type);
+        measurementTextView.setText(this.entry.unit);
+        valueTextView.setText(String.valueOf(this.entry.value));
+        dateTextView.setText(DateUtils.dateToString(this.entry.date));
+        higherPreferredCheckBox.setChecked(this.entry.isHigherPositive);
+        deleteBtn.setVisibility(View.VISIBLE);
+        deleteBtn.setOnClickListener(e -> {
+            dbHelper.delete(this.entry);
+            if (isMainActivity)
+                ((MainActivity) rawActivity).getNavController().navigateUp();
+        });
+        List<DataReaderContract.DataEntry> oldEntries = dbHelper.selectAll(this.entry.type, this.entry.unit, 1, false, this.entry.id);
+        float oldValue = oldEntries.size() >= 1
+                ? oldEntries.get(0).value
+                : 0f;
+        this.valueTextViewLayout.setHelperText(getString(R.string.last_value, oldValue, this.entry.unit));
+    }
+
+    private void setupSelectedTypeFromScreen(MainActivity activity) {
+        DataAggregation selectedType = activity.selectedType;
+        if (selectedType == null)
+            return;
+
+        typeField.setText(selectedType.type, false);
+        measurementTextView.setText(selectedType.unit);
+        higherPreferredCheckBox.setChecked(selectedType.isHigherPositive);
+
+        if (this.entry != null)
+            return;
+
+        List<DataReaderContract.DataEntry> oldEntries = dbHelper.selectAll(selectedType.type, selectedType.unit, 2);
+        float oldValue = oldEntries.size() > 1 && oldEntries.get(0).value == 0
+                ? oldEntries.get(1).value
+                : oldEntries.size() > 0
+                ? oldEntries.get(0).value
+                : 0f;
+//                List<DataReaderContract.DataEntry> oldEntries = dbHelper.selectAll(selectedType.type, selectedType.unit, 0);
+//                float oldValue = oldEntries.stream().map(e -> e.value).filter(e -> e != 0).findFirst().orElse(0F);
+        this.valueTextViewLayout.setHelperText(getString(R.string.last_value, oldValue, selectedType.unit));
     }
 
     private void save() {

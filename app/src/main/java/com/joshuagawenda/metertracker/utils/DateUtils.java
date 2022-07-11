@@ -30,6 +30,14 @@ public class DateUtils {
         return getFromDate(date, Calendar.DAY_OF_YEAR);
     }
 
+    public static Calendar calendarToStartOfDay(Calendar cal) {
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal;
+    }
+
     public static long getDaysBetween(Date a, Date b) {
         return TimeUnit.MILLISECONDS.toDays(b.getTime() - a.getTime());
     }

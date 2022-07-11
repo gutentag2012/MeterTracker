@@ -34,8 +34,10 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -93,6 +95,43 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public void insertZeroForEveryEmptyWeekTillNow() {
+        Calendar cal = Calendar.getInstance();
+        final long timeNow = cal.getTimeInMillis();
+        DateUtils.calendarToStartOfDay(cal);
+        cal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+        List<DataReaderContract.DataEntry> lastEntries = this.getAllTypes().stream()
+                .map(strings -> {
+                    List<DataReaderContract.DataEntry> foundEntries = this.selectAll(strings[0], strings[1], 1, false);
+                    if(foundEntries.size() < 1 || foundEntries.get(0).date.compareTo(cal.getTime()) >= 0)
+                        return null;
+                    return foundEntries.get(0);
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        ArrayList<DataReaderContract.DataEntry> toAdd = new ArrayList<>();
+        for (DataReaderContract.DataEntry entry : lastEntries) {
+            cal.setTime(entry.date);
+            // TODO Add setting for Day of week of entry (Multiple entires possible? Maybe checkbox wheter you want a specific date)
+            cal.add(Calendar.DATE, 7);
+            cal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+            while (cal.getTimeInMillis() <= timeNow) {
+                toAdd.add(new DataReaderContract.DataEntry(
+                        0,
+                        entry.type,
+                        entry.unit,
+                        0f,
+                        entry.order,
+                        cal.getTime(),
+                        entry.isHigherPositive
+                ));
+                cal.add(Calendar.DATE, 7);
+            }
+        }
+        this.insertAll(toAdd.toArray(new DataReaderContract.DataEntry[0]));
+    }
+
     public List<DataReaderContract.DataEntry> selectAll() {
         SQLiteDatabase db = getReadableDatabase();
         // Filter results WHERE "title" = 'My Title'
@@ -127,16 +166,29 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
     }
 
     public List<DataReaderContract.DataEntry> selectAll(String type, String unit, int limit) {
+        return this.selectAll(type, unit, limit, false);
+    }
+
+    public List<DataReaderContract.DataEntry> selectAll(String type, String unit, int limit, boolean removeZeroPadding) {
+        return this.selectAll(type, unit, limit, removeZeroPadding, -1);
+    }
+    public List<DataReaderContract.DataEntry> selectAll(String type, String unit, int limit, boolean removeZeroPadding, int lookBeforeId) {
         SQLiteDatabase db = getReadableDatabase();
         // Filter results WHERE "title" = 'My Title'
         // String selection = DataReaderContract.DataEntry.COLUMN_NAME_TITLE + " = ?";
         // String[] selectionArgs = { "My Title" };
 
+        String selection = DataReaderContract.DataEntry.COLUMN_NAME_TYPE + "= ? and " + DataReaderContract.DataEntry.COLUMN_NAME_UNIT + " = ?";
+        String[] selectionArgs = new String[]{type, unit};
+        if(lookBeforeId != -1) {
+            selection += " and " + DataReaderContract.DataEntry._ID + " < ?";
+            selectionArgs = new String[]{type, unit, String.valueOf(lookBeforeId)};
+        }
         try (Cursor cursor = db.query(
                 TABLE_NAME,   // The table to query
                 null,             // The array of columns to return (pass null to get all)
-                DataReaderContract.DataEntry.COLUMN_NAME_TYPE + "= ? and " + DataReaderContract.DataEntry.COLUMN_NAME_UNIT + " = ?",              // The columns for the WHERE clause
-                new String[]{type, unit},          // The values for the WHERE clause
+                selection,              // The columns for the WHERE clause
+                selectionArgs,          // The values for the WHERE clause
                 null,                   // don't group the rows
                 null,                   // don't filter by row groups
                 "substr(" + DataReaderContract.DataEntry.COLUMN_NAME_DATE + ", 7, 4) DESC, substr(" + DataReaderContract.DataEntry.COLUMN_NAME_DATE + ", 4, 2) DESC, substr(" + DataReaderContract.DataEntry.COLUMN_NAME_DATE + ", 1, 2) DESC",
@@ -150,8 +202,19 @@ public class DataReaderDBHelper extends SQLiteOpenHelper {
                 }
                 rows.add(new DataReaderContract.DataEntry(objects));
             }
-            Collections.reverse(rows);
+            if (!removeZeroPadding) {
+                return rows;
+            }
             List<DataReaderContract.DataEntry> toRemove = new ArrayList<>();
+            for (DataReaderContract.DataEntry entry : rows) {
+                if (entry.value != 0) {
+                    break;
+                }
+                toRemove.add(entry);
+            }
+            rows.removeAll(toRemove);
+            toRemove.clear();
+            Collections.reverse(rows);
             for (DataReaderContract.DataEntry entry : rows) {
                 if (entry.value != 0) {
                     break;

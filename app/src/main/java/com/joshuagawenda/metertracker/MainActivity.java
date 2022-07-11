@@ -98,40 +98,42 @@ public class MainActivity extends AppCompatActivity implements NavController.OnD
         SharedPreferences main = getSharedPreferences("Main", Context.MODE_PRIVATE);
 //        main.edit().putString("lastReminder", null).apply();
         String lastReminder = main.getString("lastReminder", null);
-        Calendar cal = Calendar.getInstance();
-        Log.e(TAG, "LastReminder: " + lastReminder);
+        Calendar cal = DateUtils.calendarToStartOfDay(Calendar.getInstance());
         if (lastReminder == null || DateUtils.stringToDate(lastReminder).compareTo(cal.getTime()) <= 0) {
             final String title = "Reminder";
             final String text = "Note down the weekly values!";
             NotificationReceiver.cancelNotification(this, title, text);
-            if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
-                cal.add(Calendar.DATE, 7);
-            }
-            cal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+            // TODO Add setting for Time of notification
             cal.set(Calendar.HOUR_OF_DAY, 12);
-            cal.set(Calendar.MINUTE, 0);
-            cal.set(Calendar.SECOND, 0);
-            // TODO Add entries for every missing week
-            for (String[] allType : this.dbHelper.getAllTypes()) {
-                String type = allType[0];
-                String unit = allType[1];
-                List<DataReaderContract.DataEntry> oldEntries = dbHelper.selectAll(type, unit, 1);
-                if (oldEntries.size() > 0 && oldEntries.get(0).value == 0)
-                    continue;
-                this.dbHelper.insertAll(new DataReaderContract.DataEntry(
-                        0,
-                        type,
-                        unit,
-                        0f,
-                        Integer.parseInt(allType[2]),
-                        new Date(),
-                        Boolean.parseBoolean(allType[4])
-                ));
+            final long timeStartOfDay = cal.getTimeInMillis();
+            cal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+            if (cal.getTimeInMillis() <= timeStartOfDay) {
+                cal.add(Calendar.DATE, 7);
             }
             Log.e(TAG, "Create Reminder at " + cal.getTime());
             main.edit().putString("lastReminder", DateUtils.dateToString(cal.getTime())).apply();
             NotificationReceiver.scheduleNotification(this, cal.getTimeInMillis(), title, text);
         }
+
+        // TODO Add entries for every missing week
+        this.dbHelper.insertZeroForEveryEmptyWeekTillNow();
+//        for (String[] allType : this.dbHelper.getAllTypes()) {
+//            String type = allType[0];
+//            String unit = allType[1];
+//            List<DataReaderContract.DataEntry> lastEntries = dbHelper.selectAll(type, unit, 1, false);
+//            Log.e(TAG, "onCreate:  " + lastEntries);
+//            if (lastEntries.size() > 0 && lastEntries.get(0).value == 0)
+//                continue;
+//            this.dbHelper.insertAll(new DataReaderContract.DataEntry(
+//                    0,
+//                    type,
+//                    unit,
+//                    0f,
+//                    Integer.parseInt(allType[2]),
+//                    new Date(),
+//                    Boolean.parseBoolean(allType[4])
+//            ));
+//        }
 //        new DataReaderDBHelper(this).updateUnit();
     }
 

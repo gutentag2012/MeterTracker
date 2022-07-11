@@ -7,6 +7,7 @@ import static com.joshuagawenda.metertracker.utils.DateUtils.getYear;
 import static java.util.stream.Collectors.toList;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -89,7 +90,16 @@ public class ChartFragment extends Fragment {
         Calendar cal = Calendar.getInstance();
         DataAggregation type = ((MainActivity) getActivity()).selectedType;
         DataReaderDBHelper dbHelper = new DataReaderDBHelper(requireContext());
-        List<DataEntry> dataEntries = type == null ? dbHelper.selectAll() : dbHelper.selectAll(type.type, type.unit);
+        List<DataEntry> dataEntries = type == null ? dbHelper.selectAll() : dbHelper.selectAll(type.type, type.unit, 0, true);
+
+        // TODO Year filter in top app bar
+
+        // Remove padding with value 0
+        for(int i = 0; i < dataEntries.size(); i++) {
+            DataEntry entry = dataEntries.get(i);
+            if(entry.value != 0)
+                break;
+        }
 
         LineChart lineChart = view.findViewById(R.id.line_chart);
         BarChart barChart = view.findViewById(R.id.bar_chart);
@@ -98,7 +108,12 @@ public class ChartFragment extends Fragment {
         setupBarChart(barChart, colors, cal, type, dataEntries);
 
         MainActivity.onExport = () -> {
-            barChart.saveToGallery("chart");
+            barChart.saveToGallery(
+                    String.format("meter-tracker-chart-export-%s", DateUtils.dateToString(new Date(), "yyyy-MM-dd")),
+                    "",
+                    "Export of chart from the MeterTracker App",
+                    Bitmap.CompressFormat.JPEG,
+                    100);
         };
 
         return view;
@@ -222,6 +237,7 @@ public class ChartFragment extends Fragment {
             }
         });
         yAxis.setTextColor(Color.WHITE);
+        barChart.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.background));
         barChart.getAxisRight().setEnabled(false);
         barChart.getLegend().setTextColor(Color.WHITE);
         barChart.getDescription().setEnabled(false);
